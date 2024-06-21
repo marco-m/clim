@@ -27,14 +27,15 @@ bang -- bangs head against wall
 Usage: bang [options]
 
 Options:
--c, --count N    How many times (default: 3)
---dry-run        Enable dry-run (default: false)
---wall WALL      Type of wall (default: cardboard)
 
--h, --help       Print this help and exit
+ -c, --count N    How many times (default: 3)
+ --dry-run        Enable dry-run (default: false)
+ --wall WALL      Type of wall (default: cardboard)
+
+ -h, --help       Print this help and exit
 `)
 
-	err := cli.Parse([]string{"-h"})
+	_, err := cli.Parse([]string{"-h"})
 
 	qt.Assert(t, qt.ErrorIs(err, clim.ErrHelp))
 	qt.Assert(t, qt.Equals(err.Error(), want))
@@ -173,7 +174,7 @@ func TestParseOnePairSuccess(t *testing.T) {
 	cli := clim.New("basket", "juicy fruits")
 	cli.IntVar(&count, "", "count", "N", 3, "How many")
 
-	err := cli.Parse([]string{"--count", "42"})
+	_, err := cli.Parse([]string{"--count", "42"})
 
 	qt.Check(t, qt.IsNil(err))
 	qt.Check(t, qt.Equals(count, 42))
@@ -184,30 +185,53 @@ func TestParseOnePairUnrecognized(t *testing.T) {
 	cli := clim.New("basket", "juicy fruits")
 	cli.IntVar(&count, "", "count", "N", 3, "How many")
 
-	err := cli.Parse([]string{"--fruit", "42"})
+	_, err := cli.Parse([]string{"--fruit", "42"})
 
 	qt.Check(t, qt.ErrorMatches(err, `unrecognized flag "--fruit"`))
 }
 
-// positional argument after flag. What to do? At a minimum, return it as
-// Positionals(). NEED TO TEST THIS!
+func TestArgs(t *testing.T) {
+	type testCase struct {
+		name string
+		args []string
+		want []string
+	}
 
-// What to do if same flag specified multiple times???
-// Eg: foo --bar x -z --bar zap
+	test := func(t *testing.T, tc testCase) {
+		var count int
+		cli := clim.New("basket", "juicy fruits")
+		cli.IntVar(&count, "", "count", "N", 3, "How many")
 
-// what to do for --version ? Behave as --help ? Return error if not alone???
+		_, err := cli.Parse(tc.args)
 
-// there are many programs (go, git) that return a non-zero exit status also on -h !
-// More exactly,
-// "go help build" returns 0
-// "go build -h" returns 2 (with 2 being the cli parse exist status for Go)
-// git returns
-// 129 on "-h" (although it prints the usage message)
-// 128 on parse error
-// 0 on "git help log"
+		qt.Assert(t, qt.IsNil(err))
+		qt.Assert(t, qt.DeepEquals(cli.Args(), tc.want))
+	}
 
-// mandatory flags???
+	testCases := []testCase{
+		{
+			name: "no positionals",
+			args: []string{"--count=42"},
+			want: []string{},
+		},
+		{
+			name: "vanilla",
+			args: []string{"--count=42", "a", "b"},
+			want: []string{"a", "b"},
+		},
+		{
+			name: "sneaky",
+			args: []string{"--count=42", "---a", "b"},
+			want: []string{"---a", "b"},
+		},
+		{
+			name: "after the first positional, a flag is not a flag",
+			args: []string{"--count=42", "a", "-b"},
+			want: []string{"a", "-b"},
+		},
+	}
 
-// do i need to handle the separator convention "--" ?
-
-// for the Value interface, what is used Get() for, compared to String() ?
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) { test(t, tc) })
+	}
+}

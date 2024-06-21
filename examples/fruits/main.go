@@ -27,22 +27,29 @@ func mainInt() int {
 	return 1
 }
 
+type Args struct {
+	count  int
+	wall   string
+	dryRun bool
+}
+
 func mainErr() error {
-	type Args struct {
-		count  int
-		wall   string
-		dryRun bool
-	}
 	var args Args
 	cli := clim.New("bang", "bangs head against wall")
+	cli.Action(func() error { return run(args) })
+
 	cli.IntVar(&args.count, "c", "count", "N", 3, "How many times")
 	cli.StringVar(&args.wall, "", "wall", "WALL", "cardboard", "Type of wall")
 	cli.BoolVar(&args.dryRun, "", "dry-run", false, "Enable dry-run")
 
-	if err := cli.Parse(os.Args[1:]); err != nil {
+	action, err := cli.Parse(os.Args[1:])
+	if err != nil {
 		return err
 	}
+	return action()
+}
 
+func run(args Args) error {
 	for i := range args.count {
 		fmt.Println(i+1, "bang against", args.wall)
 	}

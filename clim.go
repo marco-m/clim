@@ -11,16 +11,18 @@ import (
 )
 
 var (
-	ErrHelp  = errors.New("")
+	// User requested help.
+	ErrHelp = errors.New("")
+	// Either parse or validation error.
 	ErrParse = errors.New("")
 )
 
-// parseError returns an error that unwraps to ErrParse.
+// parseError returns an error that unwraps to [ErrParse].
 func parseError(format string, a ...any) error {
 	return fmt.Errorf("%w%s", ErrParse, fmt.Sprintf(format, a...))
 }
 
-// helpError returns an error that unwraps to ErrHelp.
+// helpError returns an error that unwraps to [ErrHelp].
 func helpError(format string, a ...any) error {
 	return fmt.Errorf("%w%s", ErrHelp, fmt.Sprintf(format, a...))
 }
@@ -31,8 +33,19 @@ type Command struct {
 	long2flag   map[string]*Flag
 	short2long  map[string]string
 	positionals []string
+	//
+	parent  string
+	parsers []*Command
+	action  func() error
+	groups  []group
 }
 
+type group struct {
+	name     string
+	commands []*Command
+}
+
+// New creates the top-level command, representing the program itself.
 func New(name string, desc string) *Command {
 	if name == "" {
 		panic("clim.New: name cannot be empty")
@@ -90,8 +103,8 @@ func (cmd *Command) AddFlag(value Value, short, long, label, desc string) {
 	if long == "" {
 		panic("long flag name cannot be empty")
 	}
-	if len(long) < 3 {
-		panic(fmt.Sprintf("long flag name %q must be at least 3 character", long))
+	if len(long) < 2 {
+		panic(fmt.Sprintf("long flag name %q must be at least 2 character", long))
 	}
 	if long == "help" {
 		panic(`cannot override long flag name "help"`)
@@ -123,6 +136,18 @@ func (cmd *Command) AddFlag(value Value, short, long, label, desc string) {
 	cmd.long2flag[long] = flag
 }
 
+// AddCommand adds subcommand 'name'.
+func (cmd *Command) AddParser(name string, desc string) *Command {
+	parser := New(name, desc)
+	parser.parent = cmd.name
+	cmd.parsers = append(cmd.parsers, parser)
+	return parser
+}
+
+func (cmd *Command) Group(name string, commands ...*Command) {
+	cmd.groups = append(cmd.groups, group{name, commands})
+}
+
 func (cmd *Command) IntVar(dst *int, short, long, label string,
 	defval int, desc string) {
 	cmd.AddFlag(newIntValue(defval, dst), short, long, label, desc)
@@ -138,26 +163,46 @@ func (cmd *Command) BoolVar(dst *bool, short, long string,
 	cmd.AddFlag(newBoolValue(defval, dst), short, long, "", desc)
 }
 
-// Positionals returns the positional arguments, if any.
+// Args returns the positional arguments, if any.
 // Must be called after Parse.
-func (cmd *Command) Positionals() []string {
+// WARNING will probably disappear, replaced by support for positional
+// arguments parsing.
+func (cmd *Command) Args() []string {
 	return cmd.positionals
 }
 
-func (cmd *Command) Parse(args []string) error {
+func (cmd *Command) Parse(args []string) (func() error, error) {
 	index := 0
 	for {
 		offset, err := cmd.parseOne(args[index:])
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if offset == 0 {
 			// Arrived at the end of args or at the end of the flags.
-			cmd.positionals = args[index:]
-			return nil
+			break
 		}
 		index += offset
 	}
+
+	cmd.positionals = args[index:]
+
+	if len(cmd.parsers) == 0 {
+		return cmd.run, nil
+	}
+	// If we are here, we have subcommands.
+
+	if len(cmd.positionals) == 0 {
+		return nil, parseError("expected a command")
+	}
+	command := cmd.positionals[0]
+	for _, p := range cmd.parsers {
+		if p.name == command {
+			return p.Parse(cmd.positionals[1:])
+		}
+	}
+
+	return nil, parseError("unrecognized command %q", command)
 }
 
 // _                           0  1              2            34  5
@@ -229,6 +274,45 @@ func (cmd *Command) parseOne(args []string) (int, error) {
 }
 
 func (cmd *Command) usage() error {
+	var bld strings.Builder
+
+	// Calculate the max width of the first column of commands.
+	maxColWidth := 0
+	for _, p := range cmd.parsers {
+		fmt.Fprintf(&bld, " %s", p.name)
+		maxColWidth = max(maxColWidth, bld.Len())
+		bld.Reset()
+	}
+
+	parentAndMe := cmd.name
+	if cmd.parent != "" {
+		parentAndMe = cmd.parent + " " + cmd.name
+	}
+	fmt.Fprintf(&bld, "%s -- %s\n\n", parentAndMe, cmd.desc)
+	fmt.Fprintf(&bld, "Usage: %s ", parentAndMe)
+	if len(cmd.parsers) > 0 {
+		fmt.Fprintf(&bld, "<command> ")
+	}
+	fmt.Fprintf(&bld, "[options]\n\n")
+	if len(cmd.parsers) > 0 {
+		fmt.Fprintf(&bld, "available commands:\n\n")
+	}
+
+	// Render the commands, per group.
+	const gutter = 4
+	width := maxColWidth + gutter
+	for _, group := range cmd.groups {
+		fmt.Fprintf(&bld, "%s:\n\n", group.name)
+		for _, cmd := range group.commands {
+			fmt.Fprintf(&bld, " %-*s%s\n", width, cmd.name, cmd.desc)
+		}
+		fmt.Fprintln(&bld)
+	}
+
+	return helpError("%s", bld.String()+cmd.usageOptions())
+}
+
+func (cmd *Command) usageOptions() string {
 	// First pass. Sort keys.
 	longs := maps.Keys(cmd.long2flag)
 	slices.Sort(longs)
@@ -239,6 +323,7 @@ func (cmd *Command) usage() error {
 	maxColWidth := 0
 	for _, long := range longs {
 		flag := cmd.long2flag[long]
+		fmt.Fprintf(&bld, " ")
 		if flag.Short != "" {
 			fmt.Fprintf(&bld, "-%s, ", flag.Short)
 		}
@@ -247,18 +332,35 @@ func (cmd *Command) usage() error {
 		maxColWidth = max(maxColWidth, bld.Len())
 		bld.Reset()
 	}
+	// Same for -h
+	fmt.Fprint(&bld, " -h, --help")
+	maxColWidth = max(maxColWidth, bld.Len())
+	bld.Reset()
 
 	// Third pass, add the second column.
 	const gutter = 4
-	fmt.Fprintf(&bld, "%s -- %s\n\n", cmd.name, cmd.desc)
-	fmt.Fprintf(&bld, "Usage: %s [options]\n\n", cmd.name)
-	fmt.Fprintf(&bld, "Options:\n")
+	fmt.Fprintf(&bld, "Options:\n\n")
 	for i, long := range longs {
 		flag := cmd.long2flag[long]
 		fmt.Fprintf(&bld, "%-*s%s (default: %s)\n", maxColWidth+gutter,
 			lines[i], flag.Desc, flag.DefValue)
 	}
-	fmt.Fprintf(&bld, "\n%-*s%s", maxColWidth+gutter,
-		"-h, --help", "Print this help and exit")
-	return helpError("%s", bld.String())
+	if len(longs) > 0 {
+		fmt.Fprintf(&bld, "\n")
+	}
+
+	fmt.Fprintf(&bld, "%-*s%s", maxColWidth+gutter,
+		" -h, --help", "Print this help and exit")
+	return bld.String()
+}
+
+func (cmd *Command) Action(fn func() error) {
+	cmd.action = fn
+}
+
+func (cmd *Command) run() error {
+	if cmd.action == nil {
+		return parseError("command %q: no action registered", cmd.name)
+	}
+	return cmd.action()
 }
