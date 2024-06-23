@@ -11,7 +11,6 @@ import (
 type Value interface {
 	String() string
 	Set(string) error
-	Get() any
 }
 
 // boolFlag is an interface to be implemented by boolean types (in addition to
@@ -62,8 +61,6 @@ func (i *intValue) Set(s string) error {
 	return err
 }
 
-func (i *intValue) Get() any { return int(*i) }
-
 func (i *intValue) String() string { return strconv.Itoa(int(*i)) }
 
 //
@@ -81,8 +78,6 @@ func (s *stringValue) Set(val string) error {
 	*s = stringValue(val)
 	return nil
 }
-
-func (s *stringValue) Get() any { return string(*s) }
 
 func (s *stringValue) String() string { return string(*s) }
 
@@ -105,8 +100,6 @@ func (b *boolValue) Set(s string) error {
 	*b = boolValue(v)
 	return err
 }
-
-func (b *boolValue) Get() any { return bool(*b) }
 
 func (b *boolValue) String() string { return strconv.FormatBool(bool(*b)) }
 
