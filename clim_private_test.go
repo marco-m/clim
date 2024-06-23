@@ -16,9 +16,12 @@ func TestUsage(t *testing.T) {
 	}
 	var args Args
 	cli := New("bang", "bangs head against wall")
-	cli.IntVar(&args.count, "c", "count", "N", 3, "How many times")
-	cli.StringVar(&args.wall, "", "wall", "WALL", "cardboard", "Type of wall")
-	cli.BoolVar(&args.dryRun, "", "dry-run", false, "Enable dry-run")
+	cli.AddFlag(IntVal(&args.count, 3),
+		"c", "count", "N", "How many times")
+	cli.AddFlag(StringVal(&args.wall, "cardboard"),
+		"", "wall", "WALL", "Type of wall")
+	cli.AddFlag(BoolVal(&args.dryRun, false),
+		"", "dry-run", "", "Enable dry-run")
 
 	want := strings.TrimSpace(`
 bang -- bangs head against wall

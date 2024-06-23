@@ -18,7 +18,8 @@ func TestParseIntSuccess(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var count int
 		cli := clim.New("bang", "bangs head against wall")
-		cli.IntVar(&count, "c", "count", "N", 3, "How many")
+		cli.AddFlag(clim.IntVal(&count, 3),
+			"c", "count", "N", "How many")
 
 		_, err := cli.Parse(tc.args)
 		qt.Assert(t, qt.IsNil(err))
@@ -63,7 +64,8 @@ func TestParseIntFailure(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var count int
 		cli := clim.New("bang", "bangs head against wall")
-		cli.IntVar(&count, "c", "count", "N", 3, "How many")
+		cli.AddFlag(clim.IntVal(&count, 3),
+			"c", "count", "N", "How many")
 
 		_, err := cli.Parse(tc.args)
 		qt.Assert(t, qt.Equals(err.Error(), tc.wantErr))
@@ -92,7 +94,8 @@ func TestParseString(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var fruit string
 		cli := clim.New("bang", "bangs head against wall")
-		cli.StringVar(&fruit, "f", "fruit", "FRUIT", "banana", "Which fruit")
+		cli.AddFlag(clim.StringVal(&fruit, "banana"),
+			"f", "fruit", "FRUIT", "Which fruit")
 
 		_, err := cli.Parse(tc.args)
 		qt.Assert(t, qt.IsNil(err))
@@ -137,7 +140,8 @@ func TestParseBoolSuccess(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var sliced bool
 		cli := clim.New("bang", "bangs head against wall")
-		cli.BoolVar(&sliced, "s", "sliced", false, "Sliced?")
+		cli.AddFlag(clim.BoolVal(&sliced, false),
+			"s", "sliced", "", "Sliced?")
 
 		_, err := cli.Parse(tc.args)
 		qt.Assert(t, qt.IsNil(err))
@@ -187,7 +191,8 @@ func TestParseBoolFailure(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var sliced bool
 		cli := clim.New("bang", "bangs head against wall")
-		cli.BoolVar(&sliced, "s", "sliced", false, "Sliced?")
+		cli.AddFlag(clim.BoolVal(&sliced, false),
+			"s", "sliced", "", "Sliced?")
 
 		_, err := cli.Parse(tc.args)
 		qt.Assert(t, qt.Equals(err.Error(), tc.wantErr))

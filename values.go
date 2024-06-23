@@ -1,4 +1,5 @@
-// The code in this file is taken from the std/flag package and adapted.
+// This file contains all the types that clim knows how to parse.
+// The majority of the code is taken from the std/flag package and adapted.
 
 package clim
 
@@ -7,16 +8,17 @@ import (
 	"strconv"
 )
 
-// Value is the interface to the dynamic value stored in a flag.
+// Value is the interface for a type to be parsable by clim.
+// (Idea taken from std/flag).
 type Value interface {
 	String() string
 	Set(string) error
 }
 
 // boolFlag is an interface to be implemented by boolean types (in addition to
-// the Value interface), to indicate that the flag can be supplied without
+// the [Value] interface), to indicate that the flag can be supplied without
 // "=value" text.
-// Instead of using this directly, use function IsBoolValue() instead.
+// No need to type assert on this; instead, use function [IsBoolValue].
 // Should be called boolValue to match the Value interface, but we use
 // boolValue for the concrete implementation... To be reconsidered.
 type boolFlag interface {
@@ -47,7 +49,7 @@ type Flag struct {
 
 type intValue int
 
-func newIntValue(defval int, dst *int) *intValue {
+func IntVal(dst *int, defval int) *intValue {
 	*dst = defval
 	return (*intValue)(dst)
 }
@@ -69,7 +71,7 @@ func (i *intValue) String() string { return strconv.Itoa(int(*i)) }
 
 type stringValue string
 
-func newStringValue(defval string, dst *string) *stringValue {
+func StringVal(dst *string, defval string) *stringValue {
 	*dst = defval
 	return (*stringValue)(dst)
 }
@@ -87,7 +89,7 @@ func (s *stringValue) String() string { return string(*s) }
 
 type boolValue bool
 
-func newBoolValue(defval bool, dst *bool) *boolValue {
+func BoolVal(dst *bool, defval bool) *boolValue {
 	*dst = defval
 	return (*boolValue)(dst)
 }

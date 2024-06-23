@@ -148,21 +148,6 @@ func (cmd *Command) Group(name string, commands ...*Command) {
 	cmd.groups = append(cmd.groups, group{name, commands})
 }
 
-func (cmd *Command) IntVar(dst *int, short, long, label string,
-	defval int, desc string) {
-	cmd.AddFlag(newIntValue(defval, dst), short, long, label, desc)
-}
-
-func (cmd *Command) StringVar(dst *string, short, long, label string,
-	defval string, desc string) {
-	cmd.AddFlag(newStringValue(defval, dst), short, long, label, desc)
-}
-
-func (cmd *Command) BoolVar(dst *bool, short, long string,
-	defval bool, desc string) {
-	cmd.AddFlag(newBoolValue(defval, dst), short, long, "", desc)
-}
-
 // Args returns the positional arguments, if any.
 // Must be called after Parse.
 // WARNING will probably disappear, replaced by support for positional

@@ -17,10 +17,11 @@ func newCloneCli(parentCli *clim.Command) *clim.Command {
 
 	cloneCmd := cloneCmd{}
 
-	cli.BoolVar(&cloneCmd.noUpdate, "U", "noupdate", false,
+	cli.AddFlag(clim.BoolVal(&cloneCmd.noUpdate, false),
+		"U", "noupdate", "",
 		"the clone will include an empty working directory (only a repository)")
-	cli.StringVar(&cloneCmd.updateRev, "u", "updaterev", "REV", "",
-		"revision, tag, or branch to check out")
+	cli.AddFlag(clim.StringVal(&cloneCmd.updateRev, ""),
+		"u", "updaterev", "REV", "revision, tag, or branch to check out")
 
 	cli.Action(func() error { return cloneCmd.Run() })
 

@@ -38,9 +38,12 @@ func mainErr() error {
 	cli := clim.New("bang", "bangs head against wall")
 	cli.Action(func() error { return run(args) })
 
-	cli.IntVar(&args.count, "c", "count", "N", 3, "How many times")
-	cli.StringVar(&args.wall, "", "wall", "WALL", "cardboard", "Type of wall")
-	cli.BoolVar(&args.dryRun, "", "dry-run", false, "Enable dry-run")
+	cli.AddFlag(clim.IntVal(&args.count, 3),
+		"c", "count", "N", "How many times")
+	cli.AddFlag(clim.StringVal(&args.wall, "cardboard"),
+		"", "wall", "WALL", "Type of wall")
+	cli.AddFlag(clim.BoolVal(&args.dryRun, false),
+		"", "dry-run", "", "Enable dry-run")
 
 	action, err := cli.Parse(os.Args[1:])
 	if err != nil {
