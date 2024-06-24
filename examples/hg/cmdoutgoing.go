@@ -43,15 +43,15 @@ func newOutgoingCli(parentCli *clim.Command) *clim.Command {
 
 	outgoingCmd := outgoingCmd{}
 
-	cli.AddFlag(&clim.Flag{Value: clim.BoolVal(&outgoingCmd.force, false),
+	cli.AddFlag(&clim.Flag{Value: clim.Bool(&outgoingCmd.force, false),
 		Short: "f", Long: "force",
 		Desc: "run even when the destination is unrelated"})
-	cli.AddFlag(&clim.Flag{Value: clim.StringVal(&outgoingCmd.rev, ""),
+	cli.AddFlag(&clim.Flag{Value: clim.String(&outgoingCmd.rev, ""),
 		Short: "r", Long: "rev",
 		Desc: "a changeset intended to be included in the destination"})
-	cli.AddFlag(&clim.Flag{Value: clim.BoolVal(&outgoingCmd.newestFirst, false),
+	cli.AddFlag(&clim.Flag{Value: clim.Bool(&outgoingCmd.newestFirst, false),
 		Short: "n", Long: "newest-first", Desc: "show newest record first"})
-	cli.AddFlag(&clim.Flag{Value: clim.BoolVal(&outgoingCmd.bookmarks, false),
+	cli.AddFlag(&clim.Flag{Value: clim.Bool(&outgoingCmd.bookmarks, false),
 		Short: "B", Long: "bookmarks", Desc: "compare bookmarks"})
 
 	cli.Action(func() error { return outgoingCmd.Run() })

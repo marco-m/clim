@@ -18,7 +18,7 @@ func TestParseIntSuccess(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var count int
 		cli := clim.New("bang", "bangs head against wall")
-		cli.AddFlag(&clim.Flag{Value: clim.IntVal(&count, 3),
+		cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 3),
 			Short: "c", Long: "count"})
 
 		_, err := cli.Parse(tc.args)
@@ -64,7 +64,7 @@ func TestParseIntFailure(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var count int
 		cli := clim.New("bang", "bangs head against wall")
-		cli.AddFlag(&clim.Flag{Value: clim.IntVal(&count, 3),
+		cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 3),
 			Short: "c", Long: "count"})
 
 		_, err := cli.Parse(tc.args)
@@ -94,7 +94,7 @@ func TestParseString(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var fruit string
 		cli := clim.New("bang", "bangs head against wall")
-		cli.AddFlag(&clim.Flag{Value: clim.StringVal(&fruit, "banana"),
+		cli.AddFlag(&clim.Flag{Value: clim.String(&fruit, "banana"),
 			Short: "f", Long: "fruit"})
 
 		_, err := cli.Parse(tc.args)
@@ -140,7 +140,7 @@ func TestParseBoolSuccess(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var sliced bool
 		cli := clim.New("bang", "bangs head against wall")
-		cli.AddFlag(&clim.Flag{Value: clim.BoolVal(&sliced, false),
+		cli.AddFlag(&clim.Flag{Value: clim.Bool(&sliced, false),
 			Short: "s", Long: "sliced"})
 
 		_, err := cli.Parse(tc.args)
@@ -191,7 +191,7 @@ func TestParseBoolFailure(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var sliced bool
 		cli := clim.New("bang", "bangs head against wall")
-		cli.AddFlag(&clim.Flag{Value: clim.BoolVal(&sliced, false),
+		cli.AddFlag(&clim.Flag{Value: clim.Bool(&sliced, false),
 			Short: "s", Long: "sliced"})
 
 		_, err := cli.Parse(tc.args)

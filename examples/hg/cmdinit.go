@@ -33,10 +33,10 @@ func newInitCli(parentCli *clim.Command) *clim.Command {
 
 	initCmd := initCmd{}
 
-	cli.AddFlag(&clim.Flag{Value: clim.StringVal(&initCmd.remoteCmd, ""),
+	cli.AddFlag(&clim.Flag{Value: clim.String(&initCmd.remoteCmd, ""),
 		Long: "remotecmd", Label: "CMD",
 		Desc: "specify hg command to run on the remote side"})
-	cli.AddFlag(&clim.Flag{Value: clim.BoolVal(&initCmd.mq, false),
+	cli.AddFlag(&clim.Flag{Value: clim.Bool(&initCmd.mq, false),
 		Long: "mq", Desc: "operate on patch repository"})
 
 	cli.Action(func() error { return initCmd.Run() })

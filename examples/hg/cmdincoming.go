@@ -43,16 +43,16 @@ func newIncomingCli(parentCli *clim.Command) *clim.Command {
 
 	incomingCmd := incomingCmd{}
 
-	cli.AddFlag(&clim.Flag{Value: clim.BoolVal(&incomingCmd.force, false),
+	cli.AddFlag(&clim.Flag{Value: clim.Bool(&incomingCmd.force, false),
 		Short: "f", Long: "force",
 		Desc: "run even if remote repository is unrelated"})
-	cli.AddFlag(&clim.Flag{Value: clim.BoolVal(&incomingCmd.newestFirst, false),
+	cli.AddFlag(&clim.Flag{Value: clim.Bool(&incomingCmd.newestFirst, false),
 		Short: "n", Long: "newest-first",
 		Desc: "show newest record first"})
-	cli.AddFlag(&clim.Flag{Value: clim.StringVal(&incomingCmd.bundle, ""),
+	cli.AddFlag(&clim.Flag{Value: clim.String(&incomingCmd.bundle, ""),
 		Long: "bundle", Label: "FILE",
 		Desc: "file to store the bundles into"})
-	cli.AddFlag(&clim.Flag{Value: clim.StringVal(&incomingCmd.rev, ""),
+	cli.AddFlag(&clim.Flag{Value: clim.String(&incomingCmd.rev, ""),
 		Short: "r", Long: "rev", Label: "REV",
 		Desc: "a remote changeset intended to be added"})
 

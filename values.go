@@ -50,7 +50,7 @@ type Flag struct {
 
 type intValue int
 
-func IntVal(dst *int, defval int) *intValue {
+func Int(dst *int, defval int) *intValue {
 	*dst = defval
 	return (*intValue)(dst)
 }
@@ -72,7 +72,7 @@ func (i *intValue) String() string { return strconv.Itoa(int(*i)) }
 
 type stringValue string
 
-func StringVal(dst *string, defval string) *stringValue {
+func String(dst *string, defval string) *stringValue {
 	*dst = defval
 	return (*stringValue)(dst)
 }
@@ -90,7 +90,7 @@ func (s *stringValue) String() string { return string(*s) }
 
 type boolValue bool
 
-func BoolVal(dst *bool, defval bool) *boolValue {
+func Bool(dst *bool, defval bool) *boolValue {
 	*dst = defval
 	return (*boolValue)(dst)
 }
