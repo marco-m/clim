@@ -43,18 +43,16 @@ func newOutgoingCli(parentCli *clim.Command) *clim.Command {
 
 	outgoingCmd := outgoingCmd{}
 
-	cli.AddFlag(clim.BoolVal(&outgoingCmd.force, false),
-		"f", "force", "",
-		"run even when the destination is unrelated")
-	cli.AddFlag(clim.StringVal(&outgoingCmd.rev, ""),
-		"r", "rev", "REV",
-		"a changeset intended to be included in the destination")
-	cli.AddFlag(clim.BoolVal(&outgoingCmd.newestFirst, false),
-		"n", "newest-first", "",
-		"show newest record first")
-	cli.AddFlag(clim.BoolVal(&outgoingCmd.bookmarks, false),
-		"B", "bookmarks", "",
-		"compare bookmarks")
+	cli.AddFlag(&clim.Flag{Value: clim.BoolVal(&outgoingCmd.force, false),
+		Short: "f", Long: "force",
+		Desc: "run even when the destination is unrelated"})
+	cli.AddFlag(&clim.Flag{Value: clim.StringVal(&outgoingCmd.rev, ""),
+		Short: "r", Long: "rev",
+		Desc: "a changeset intended to be included in the destination"})
+	cli.AddFlag(&clim.Flag{Value: clim.BoolVal(&outgoingCmd.newestFirst, false),
+		Short: "n", Long: "newest-first", Desc: "show newest record first"})
+	cli.AddFlag(&clim.Flag{Value: clim.BoolVal(&outgoingCmd.bookmarks, false),
+		Short: "B", Long: "bookmarks", Desc: "compare bookmarks"})
 
 	cli.Action(func() error { return outgoingCmd.Run() })
 
@@ -63,6 +61,6 @@ func newOutgoingCli(parentCli *clim.Command) *clim.Command {
 
 func (cmd *outgoingCmd) Run() error {
 	fmt.Println("hello from OutgoingCmd Run")
-	fmt.Printf("%#+v", cmd)
+	fmt.Printf("%#+v\n", cmd)
 	return nil
 }

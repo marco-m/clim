@@ -38,12 +38,12 @@ func mainErr() error {
 	cli := clim.New("bang", "bangs head against wall")
 	cli.Action(func() error { return run(args) })
 
-	cli.AddFlag(clim.IntVal(&args.count, 3),
-		"c", "count", "N", "How many times")
-	cli.AddFlag(clim.StringVal(&args.wall, "cardboard"),
-		"", "wall", "WALL", "Type of wall")
-	cli.AddFlag(clim.BoolVal(&args.dryRun, false),
-		"", "dry-run", "", "Enable dry-run")
+	cli.AddFlag(&clim.Flag{Value: clim.IntVal(&args.count, 3),
+		Short: "c", Long: "count", Label: "N", Desc: "How many times"})
+	cli.AddFlag(&clim.Flag{Value: clim.StringVal(&args.wall, "cardboard"),
+		Long: "wall", Desc: "Type of wall"})
+	cli.AddFlag(&clim.Flag{Value: clim.BoolVal(&args.dryRun, false),
+		Long: "dry-run", Desc: "Enable dry-run"})
 
 	action, err := cli.Parse(os.Args[1:])
 	if err != nil {

@@ -66,74 +66,70 @@ func New(name string, desc string) *Command {
 // particular, [Set] would decompose the comma-separated string into the slice.
 //
 // Taken from std/flag and adapted.
-func (cmd *Command) AddFlag(value Value, short, long, label, desc string) {
+func (cmd *Command) AddFlag(flag *Flag) {
 	//
 	// Validate the short flag.
 	//
-	if short != "" {
-		if strings.HasPrefix(short, "-") {
+	if flag.Short != "" {
+		if strings.HasPrefix(flag.Short, "-") {
 			panic("short flag name must not begin with '-'")
 		}
-		if strings.Contains(short, "=") {
+		if strings.Contains(flag.Short, "=") {
 			panic("short flag name must not contain '='")
 		}
 
 		// short can be empty.
 
-		if len(short) > 1 {
-			panic(fmt.Sprintf("short flag name %q must be exactly 1 character", short))
+		if len(flag.Short) > 1 {
+			panic(fmt.Sprintf("short flag name %q must be exactly 1 character", flag.Short))
 		}
-		if short == "h" {
+		if flag.Short == "h" {
 			panic(`cannot override short flag name "h"`)
 		}
-		if _, found := cmd.short2long[short]; found {
-			panic(fmt.Sprintf("%s: short flag name %q already defined", cmd.name, short))
+		if _, found := cmd.short2long[flag.Short]; found {
+			panic(fmt.Sprintf("%s: short flag name %q already defined", cmd.name, flag.Short))
 		}
 	}
 
 	//
 	// Validate the long flag.
 	//
-	if strings.HasPrefix(long, "-") {
-		panic(fmt.Sprintf("long flag name %q must not begin with '-'", long))
+	if strings.HasPrefix(flag.Long, "-") {
+		panic(fmt.Sprintf("long flag name %q must not begin with '-'", flag.Long))
 	}
-	if strings.Contains(long, "=") {
-		panic(fmt.Sprintf("long flag name %q must not contain '='", long))
+	if strings.Contains(flag.Long, "=") {
+		panic(fmt.Sprintf("long flag name %q must not contain '='", flag.Long))
 	}
-	if long == "" {
+	if flag.Long == "" {
 		panic("long flag name cannot be empty")
 	}
-	if len(long) < 2 {
-		panic(fmt.Sprintf("long flag name %q must be at least 2 character", long))
+	if len(flag.Long) < 2 {
+		panic(fmt.Sprintf("long flag name %q must be at least 2 character", flag.Long))
 	}
-	if long == "help" {
+	if flag.Long == "help" {
 		panic(`cannot override long flag name "help"`)
 	}
-	if _, found := cmd.long2flag[long]; found {
-		panic(fmt.Sprintf("%s: long flag name %q already defined", cmd.name, long))
+	if _, found := cmd.long2flag[flag.Long]; found {
+		panic(fmt.Sprintf("%s: long flag name %q already defined", cmd.name, flag.Long))
 	}
 
 	// A variable can be bound to only one flag.
-	for k, flag := range cmd.long2flag {
-		if flag.Value == value {
+	for k, fl := range cmd.long2flag {
+		if fl.Value == flag.Value {
 			panic(fmt.Sprintf("long flag name %q: variable already bound to flag %q",
-				long, k))
+				flag.Long, k))
 		}
 	}
 
-	flag := &Flag{
-		Short:    short,
-		Long:     long,
-		Label:    label,
-		DefValue: value.String(),
-		Desc:     desc,
-		Value:    value,
+	flag.defValue = flag.Value.String()
+	if flag.Label == "" && !IsBoolValue(flag.Value) {
+		flag.Label = strings.ToUpper(flag.Long)
 	}
 
-	if short != "" {
-		cmd.short2long[short] = long
+	if flag.Short != "" {
+		cmd.short2long[flag.Short] = flag.Long
 	}
-	cmd.long2flag[long] = flag
+	cmd.long2flag[flag.Long] = flag
 }
 
 // AddCommand adds subcommand 'name'.
@@ -327,8 +323,11 @@ func (cmd *Command) usageOptions() string {
 	fmt.Fprintf(&bld, "Options:\n\n")
 	for i, long := range longs {
 		flag := cmd.long2flag[long]
-		fmt.Fprintf(&bld, "%-*s%s (default: %s)\n", maxColWidth+gutter,
-			lines[i], flag.Desc, flag.DefValue)
+		fmt.Fprintf(&bld, "%-*s%s", maxColWidth+gutter, lines[i], flag.Desc)
+		if flag.defValue != "" {
+			fmt.Fprintf(&bld, " (default: %s)", flag.defValue)
+		}
+		fmt.Fprintf(&bld, "\n")
 	}
 	if len(longs) > 0 {
 		fmt.Fprintf(&bld, "\n")

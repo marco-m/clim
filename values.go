@@ -35,12 +35,13 @@ func IsBoolValue(value Value) bool {
 
 // A Flag represents the state of a flag.
 type Flag struct {
-	Short    string // The short flag, optional.
-	Long     string // The long flag, mandatory.
-	Label    string // Placeholder in usage message.
-	DefValue string // Default value, always as text; for usage message.
-	Desc     string // Description.
-	Value    Value  // Final value, once parsed.
+	Value Value  // Final value, once parsed, mandatory.
+	Short string // Short flag, optional.
+	Long  string // Long flag, mandatory.
+	Label string // Placeholder in usage message, optional.
+	Desc  string // Description, optional.
+	//
+	defValue string // Default value, for usage message. Taken from Value.
 }
 
 //

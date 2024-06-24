@@ -17,12 +17,24 @@ func TestSimpleHelp(t *testing.T) {
 	}
 	var args Args
 	cli := clim.New("bang", "bangs head against wall")
-	cli.AddFlag(clim.IntVal(&args.count, 3),
-		"c", "count", "N", "How many times")
-	cli.AddFlag(clim.StringVal(&args.wall, "cardboard"),
-		"", "wall", "WALL", "Type of wall")
-	cli.AddFlag(clim.BoolVal(&args.dryRun, false),
-		"", "dry-run", "", "Enable dry-run")
+
+	cli.AddFlag(&clim.Flag{
+		Value: clim.IntVal(&args.count, 3),
+		Short: "c",
+		Long:  "count",
+		Label: "N",
+		Desc:  "How many times",
+	})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.StringVal(&args.wall, "cardboard"),
+		Long:  "wall",
+		Desc:  "Type of wall",
+	})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.BoolVal(&args.dryRun, false),
+		Long:  "dry-run",
+		Desc:  "Enable dry-run",
+	})
 
 	want := strings.TrimSpace(`
 bang -- bangs head against wall
@@ -49,13 +61,11 @@ func TestDestinationsMustBeUnique(t *testing.T) {
 	cli := clim.New("banana", "I am tasty")
 
 	// 1st reference to variable 'count': OK.
-	cli.AddFlag(clim.IntVal(&count, 3),
-		"", "count", "COUNT", "How many")
+	cli.AddFlag(&clim.Flag{Value: clim.IntVal(&count, 3), Long: "count"})
 
 	// 2nd reference to variable 'count': panic
 	qt.Assert(t, qt.PanicMatches(func() {
-		cli.AddFlag(clim.IntVal(&count, 0),
-			"x", "extra", "EXTRA", "Extra taste")
+		cli.AddFlag(&clim.Flag{Value: clim.IntVal(&count, 0), Long: "extra"})
 	}, `long flag name "extra": variable already bound to flag "count"`))
 }
 
@@ -65,13 +75,11 @@ func TestLongFlagsMustBeUnique(t *testing.T) {
 	cli := clim.New("banana", "I am tasty")
 
 	// 1st long flag '--count'
-	cli.AddFlag(clim.IntVal(&count, 3),
-		"", "count", "COUNT", "How many")
+	cli.AddFlag(&clim.Flag{Value: clim.IntVal(&count, 3), Long: "count"})
 
 	// 2nd long flag '--count' panics
 	qt.Assert(t, qt.PanicMatches(func() {
-		cli.AddFlag(clim.IntVal(&extra, 0),
-			"", "count", "EXTRA", "Extra taste")
+		cli.AddFlag(&clim.Flag{Value: clim.IntVal(&extra, 0), Long: "count"})
 	}, `banana: long flag name "count" already defined`))
 }
 
@@ -81,13 +89,14 @@ func TestShortFlagsMustBeUnique(t *testing.T) {
 	cli := clim.New("banana", "I am tasty")
 
 	// 1st short flag '-c'
-	cli.AddFlag(clim.IntVal(&count, 3),
-		"c", "count", "COUNT", "How many")
+	cli.AddFlag(&clim.Flag{
+		Value: clim.IntVal(&count, 3),
+		Short: "c", Long: "count"})
 
 	// 2nd short flag '-c' panics
 	qt.Assert(t, qt.PanicMatches(func() {
-		cli.AddFlag(clim.IntVal(&extra, 0),
-			"c", "extra", "EXTRA", "Extra taste")
+		cli.AddFlag(&clim.Flag{Value: clim.IntVal(&extra, 0),
+			Short: "c", Long: "extra"})
 	}, `banana: short flag name "c" already defined`))
 }
 
@@ -100,14 +109,13 @@ func TestCannotOverrideHelpFlag(t *testing.T) {
 	// FIXME In the future I would like to allow to ovverride --help
 	//       to allow the program to provide more verbose information?
 	qt.Assert(t, qt.PanicMatches(func() {
-		cli.AddFlag(clim.IntVal(&count, 0),
-			"x", "help", "COUNT", "How many")
+		cli.AddFlag(&clim.Flag{Value: clim.IntVal(&count, 0), Long: "help"})
 	}, `cannot override long flag name "help"`))
 
 	// Attempt to override '-h' panics
 	qt.Assert(t, qt.PanicMatches(func() {
-		cli.AddFlag(clim.IntVal(&extra, 0),
-			"h", "extra", "EXTRA", "Extra taste")
+		cli.AddFlag(&clim.Flag{Value: clim.IntVal(&extra, 0),
+			Short: "h", Long: "extra"})
 	}, `cannot override short flag name "h"`))
 }
 
@@ -117,13 +125,11 @@ func TestLongFlagIsMandatory(t *testing.T) {
 	cli := clim.New("banana", "I am tasty")
 
 	// Empty short flag is OK
-	cli.AddFlag(clim.IntVal(&count, 3),
-		"", "count", "COUNT", "How many")
+	cli.AddFlag(&clim.Flag{Value: clim.IntVal(&count, 3), Long: "count"})
 
 	// Empty long flag panics
 	qt.Assert(t, qt.PanicMatches(func() {
-		cli.AddFlag(clim.IntVal(&extra, 4),
-			"x", "", "EXTRA", "Extra taste")
+		cli.AddFlag(&clim.Flag{Value: clim.IntVal(&extra, 4), Short: "x"})
 	}, `long flag name cannot be empty`))
 }
 
@@ -140,8 +146,8 @@ func TestFlagsNamingConstraints(t *testing.T) {
 		var count int
 
 		qt.Assert(t, qt.PanicMatches(func() {
-			cli.AddFlag(clim.IntVal(&count, 3),
-				tc.short, tc.long, "N", "How many")
+			cli.AddFlag(&clim.Flag{Value: clim.IntVal(&count, 3),
+				Short: tc.short, Long: tc.long})
 		}, tc.want))
 	}
 
@@ -186,8 +192,7 @@ func TestNameCannotBeEmpty(t *testing.T) {
 func TestParseOnePairSuccess(t *testing.T) {
 	var count int
 	cli := clim.New("basket", "juicy fruits")
-	cli.AddFlag(clim.IntVal(&count, 3),
-		"", "count", "N", "How many")
+	cli.AddFlag(&clim.Flag{Value: clim.IntVal(&count, 3), Long: "count"})
 
 	_, err := cli.Parse([]string{"--count", "42"})
 
@@ -198,8 +203,7 @@ func TestParseOnePairSuccess(t *testing.T) {
 func TestParseOnePairUnrecognized(t *testing.T) {
 	var count int
 	cli := clim.New("basket", "juicy fruits")
-	cli.AddFlag(clim.IntVal(&count, 3),
-		"", "count", "N", "How many")
+	cli.AddFlag(&clim.Flag{Value: clim.IntVal(&count, 3), Long: "count"})
 
 	_, err := cli.Parse([]string{"--fruit", "42"})
 
@@ -216,8 +220,7 @@ func TestArgs(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var count int
 		cli := clim.New("basket", "juicy fruits")
-		cli.AddFlag(clim.IntVal(&count, 3),
-			"", "count", "N", "How many")
+		cli.AddFlag(&clim.Flag{Value: clim.IntVal(&count, 3), Long: "count"})
 
 		_, err := cli.Parse(tc.args)
 

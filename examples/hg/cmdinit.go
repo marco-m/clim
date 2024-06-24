@@ -33,12 +33,11 @@ func newInitCli(parentCli *clim.Command) *clim.Command {
 
 	initCmd := initCmd{}
 
-	cli.AddFlag(clim.StringVal(&initCmd.remoteCmd, ""),
-		"", "remotecmd", "CMD",
-		"specify hg command to run on the remote side")
-	cli.AddFlag(clim.BoolVal(&initCmd.mq, false),
-		"", "mq", "",
-		"operate on patch repository")
+	cli.AddFlag(&clim.Flag{Value: clim.StringVal(&initCmd.remoteCmd, ""),
+		Long: "remotecmd", Label: "CMD",
+		Desc: "specify hg command to run on the remote side"})
+	cli.AddFlag(&clim.Flag{Value: clim.BoolVal(&initCmd.mq, false),
+		Long: "mq", Desc: "operate on patch repository"})
 
 	cli.Action(func() error { return initCmd.Run() })
 
@@ -47,6 +46,6 @@ func newInitCli(parentCli *clim.Command) *clim.Command {
 
 func (cmd *initCmd) Run() error {
 	fmt.Println("hello from InitCmd Run")
-	fmt.Printf("%#+v", cmd)
+	fmt.Printf("%#+v\n", cmd)
 	return nil
 }

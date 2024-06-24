@@ -17,11 +17,12 @@ func newCloneCli(parentCli *clim.Command) *clim.Command {
 
 	cloneCmd := cloneCmd{}
 
-	cli.AddFlag(clim.BoolVal(&cloneCmd.noUpdate, false),
-		"U", "noupdate", "",
-		"the clone will include an empty working directory (only a repository)")
-	cli.AddFlag(clim.StringVal(&cloneCmd.updateRev, ""),
-		"u", "updaterev", "REV", "revision, tag, or branch to check out")
+	cli.AddFlag(&clim.Flag{Value: clim.BoolVal(&cloneCmd.noUpdate, false),
+		Short: "U", Long: "noupdate",
+		Desc: "the clone will include an empty working directory (only a repository)"})
+	cli.AddFlag(&clim.Flag{Value: clim.StringVal(&cloneCmd.updateRev, ""),
+		Short: "u", Long: "updaterev", Label: "REV",
+		Desc: "revision, tag, or branch to check out"})
 
 	cli.Action(func() error { return cloneCmd.Run() })
 
@@ -30,6 +31,6 @@ func newCloneCli(parentCli *clim.Command) *clim.Command {
 
 func (cmd *cloneCmd) Run() error {
 	fmt.Println("hello from CloneCmd Run")
-	fmt.Printf("%#+v", cmd)
+	fmt.Printf("%#+v\n", cmd)
 	return nil
 }

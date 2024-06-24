@@ -18,8 +18,8 @@ func TestParseIntSuccess(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var count int
 		cli := clim.New("bang", "bangs head against wall")
-		cli.AddFlag(clim.IntVal(&count, 3),
-			"c", "count", "N", "How many")
+		cli.AddFlag(&clim.Flag{Value: clim.IntVal(&count, 3),
+			Short: "c", Long: "count"})
 
 		_, err := cli.Parse(tc.args)
 		qt.Assert(t, qt.IsNil(err))
@@ -64,8 +64,8 @@ func TestParseIntFailure(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var count int
 		cli := clim.New("bang", "bangs head against wall")
-		cli.AddFlag(clim.IntVal(&count, 3),
-			"c", "count", "N", "How many")
+		cli.AddFlag(&clim.Flag{Value: clim.IntVal(&count, 3),
+			Short: "c", Long: "count"})
 
 		_, err := cli.Parse(tc.args)
 		qt.Assert(t, qt.Equals(err.Error(), tc.wantErr))
@@ -94,8 +94,8 @@ func TestParseString(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var fruit string
 		cli := clim.New("bang", "bangs head against wall")
-		cli.AddFlag(clim.StringVal(&fruit, "banana"),
-			"f", "fruit", "FRUIT", "Which fruit")
+		cli.AddFlag(&clim.Flag{Value: clim.StringVal(&fruit, "banana"),
+			Short: "f", Long: "fruit"})
 
 		_, err := cli.Parse(tc.args)
 		qt.Assert(t, qt.IsNil(err))
@@ -140,8 +140,8 @@ func TestParseBoolSuccess(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var sliced bool
 		cli := clim.New("bang", "bangs head against wall")
-		cli.AddFlag(clim.BoolVal(&sliced, false),
-			"s", "sliced", "", "Sliced?")
+		cli.AddFlag(&clim.Flag{Value: clim.BoolVal(&sliced, false),
+			Short: "s", Long: "sliced"})
 
 		_, err := cli.Parse(tc.args)
 		qt.Assert(t, qt.IsNil(err))
@@ -191,8 +191,8 @@ func TestParseBoolFailure(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var sliced bool
 		cli := clim.New("bang", "bangs head against wall")
-		cli.AddFlag(clim.BoolVal(&sliced, false),
-			"s", "sliced", "", "Sliced?")
+		cli.AddFlag(&clim.Flag{Value: clim.BoolVal(&sliced, false),
+			Short: "s", Long: "sliced"})
 
 		_, err := cli.Parse(tc.args)
 		qt.Assert(t, qt.Equals(err.Error(), tc.wantErr))
