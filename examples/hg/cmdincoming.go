@@ -34,7 +34,7 @@ type incomingCmd struct {
 	force       bool
 	newestFirst bool
 	bundle      string
-	rev         string // FIXME support slices!!!
+	rev         []string
 }
 
 func newIncomingCli(parentCli *clim.Command) *clim.Command {
@@ -52,9 +52,9 @@ func newIncomingCli(parentCli *clim.Command) *clim.Command {
 	cli.AddFlag(&clim.Flag{Value: clim.String(&incomingCmd.bundle, ""),
 		Long: "bundle", Label: "FILE",
 		Desc: "file to store the bundles into"})
-	cli.AddFlag(&clim.Flag{Value: clim.String(&incomingCmd.rev, ""),
-		Short: "r", Long: "rev", Label: "REV",
-		Desc: "a remote changeset intended to be added"})
+	cli.AddFlag(&clim.Flag{Value: clim.StringSlice(&incomingCmd.rev, nil),
+		Short: "r", Long: "rev", Label: "REV[,REV,..]",
+		Desc: "remote changeset(s) intended to be added"})
 
 	cli.Action(func() error { return incomingCmd.Run() })
 

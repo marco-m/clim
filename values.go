@@ -6,6 +6,7 @@ package clim
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 // Value is the interface for a type to be parsable by clim.
@@ -58,13 +59,44 @@ func Int(dst *int, defval int) *intValue {
 func (i *intValue) Set(s string) error {
 	v, err := strconv.ParseInt(s, 0, strconv.IntSize)
 	if err != nil {
-		err = fmt.Errorf("could not parse %q as int (%s)", s, err)
+		return fmt.Errorf("could not parse %q as int (%s)", s, err)
 	}
 	*i = intValue(v)
-	return err
+	return nil
 }
 
 func (i *intValue) String() string { return strconv.Itoa(int(*i)) }
+
+//
+// int slice Value
+//
+
+type intSliceValue []int
+
+// parse a comma-separated list of integers
+func IntSlice(dst *[]int, defval []int) *intSliceValue {
+	*dst = defval
+	return (*intSliceValue)(dst)
+}
+
+func (is *intSliceValue) Set(val string) error {
+	for _, s := range strings.Split(val, ",") {
+		v, err := strconv.Atoi(s)
+		if err != nil {
+			return fmt.Errorf("could not parse %q as int (%s)", s, err)
+		}
+		*is = append(*is, v)
+	}
+	return nil
+}
+
+func (is *intSliceValue) String() string {
+	vals := make([]string, 0, len(*is))
+	for _, i := range *is {
+		vals = append(vals, strconv.Itoa(i))
+	}
+	return strings.Join(vals, ",")
+}
 
 //
 // string Value
@@ -85,6 +117,25 @@ func (s *stringValue) Set(val string) error {
 func (s *stringValue) String() string { return string(*s) }
 
 //
+// string slice value
+//
+
+type stringSliceValue []string
+
+// parse a comma-separated list of strings
+func StringSlice(dst *[]string, defval []string) *stringSliceValue {
+	*dst = defval
+	return (*stringSliceValue)(dst)
+}
+
+func (s *stringSliceValue) Set(val string) error {
+	*s = strings.Split(val, ",")
+	return nil
+}
+
+func (s *stringSliceValue) String() string { return strings.Join(*s, ",") }
+
+//
 // bool Value
 //
 
@@ -98,10 +149,10 @@ func Bool(dst *bool, defval bool) *boolValue {
 func (b *boolValue) Set(s string) error {
 	v, err := strconv.ParseBool(s)
 	if err != nil {
-		err = fmt.Errorf("could not parse %q as bool (%s)", s, err)
+		return fmt.Errorf("could not parse %q as bool (%s)", s, err)
 	}
 	*b = boolValue(v)
-	return err
+	return nil
 }
 
 func (b *boolValue) String() string { return strconv.FormatBool(bool(*b)) }

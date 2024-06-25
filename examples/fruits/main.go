@@ -28,9 +28,10 @@ func mainInt() int {
 }
 
 type Args struct {
-	count  int
-	wall   string
-	dryRun bool
+	count    int
+	wall     string
+	dryRun   bool
+	sequence []int
 }
 
 func mainErr() error {
@@ -44,6 +45,9 @@ func mainErr() error {
 		Long: "wall", Desc: "Type of wall"})
 	cli.AddFlag(&clim.Flag{Value: clim.Bool(&args.dryRun, false),
 		Long: "dry-run", Desc: "Enable dry-run"})
+	cli.AddFlag(&clim.Flag{Value: clim.IntSlice(&args.sequence, []int{1, 2, 3}),
+		Short: "s", Long: "sequence", Label: "N[,N,..]",
+		Desc: "bang sequence"})
 
 	action, err := cli.Parse(os.Args[1:])
 	if err != nil {

@@ -32,7 +32,7 @@ options ([+] can be repeated):
 
 type outgoingCmd struct {
 	force       bool
-	rev         string // FIXME support slices!!!
+	rev         []string
 	newestFirst bool
 	bookmarks   bool
 }
@@ -46,9 +46,9 @@ func newOutgoingCli(parentCli *clim.Command) *clim.Command {
 	cli.AddFlag(&clim.Flag{Value: clim.Bool(&outgoingCmd.force, false),
 		Short: "f", Long: "force",
 		Desc: "run even when the destination is unrelated"})
-	cli.AddFlag(&clim.Flag{Value: clim.String(&outgoingCmd.rev, ""),
-		Short: "r", Long: "rev",
-		Desc: "a changeset intended to be included in the destination"})
+	cli.AddFlag(&clim.Flag{Value: clim.StringSlice(&outgoingCmd.rev, nil),
+		Short: "r", Long: "rev", Label: "REV[,REV,..]",
+		Desc: "changeset(s) intended to be included in the destination"})
 	cli.AddFlag(&clim.Flag{Value: clim.Bool(&outgoingCmd.newestFirst, false),
 		Short: "n", Long: "newest-first", Desc: "show newest record first"})
 	cli.AddFlag(&clim.Flag{Value: clim.Bool(&outgoingCmd.bookmarks, false),
