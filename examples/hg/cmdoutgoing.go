@@ -37,8 +37,8 @@ type outgoingCmd struct {
 	bookmarks   bool
 }
 
-func newOutgoingCli(parentCli *clim.Command) *clim.Command {
-	cli := parentCli.AddParser("outgoing",
+func newOutgoingCLI(parentCli *clim.CLI) *clim.CLI {
+	cli := parentCli.AddCLI("outgoing",
 		"show changesets not found in the destination")
 
 	outgoingCmd := outgoingCmd{}
@@ -54,7 +54,7 @@ func newOutgoingCli(parentCli *clim.Command) *clim.Command {
 	cli.AddFlag(&clim.Flag{Value: clim.Bool(&outgoingCmd.bookmarks, false),
 		Short: "B", Long: "bookmarks", Desc: "compare bookmarks"})
 
-	cli.Action(func() error { return outgoingCmd.Run() })
+	cli.SetAction(func() error { return outgoingCmd.Run() })
 
 	return cli
 }

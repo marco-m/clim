@@ -27,8 +27,8 @@ type initCmd struct {
 	mq        bool
 }
 
-func newInitCli(parentCli *clim.Command) *clim.Command {
-	cli := parentCli.AddParser("init",
+func newInitCLI(parentCli *clim.CLI) *clim.CLI {
+	cli := parentCli.AddCLI("init",
 		"create a new repository in the given directory")
 
 	initCmd := initCmd{}
@@ -39,7 +39,7 @@ func newInitCli(parentCli *clim.Command) *clim.Command {
 	cli.AddFlag(&clim.Flag{Value: clim.Bool(&initCmd.mq, false),
 		Long: "mq", Desc: "operate on patch repository"})
 
-	cli.Action(func() error { return initCmd.Run() })
+	cli.SetAction(func() error { return initCmd.Run() })
 
 	return cli
 }

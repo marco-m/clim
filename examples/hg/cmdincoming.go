@@ -37,8 +37,8 @@ type incomingCmd struct {
 	rev         []string
 }
 
-func newIncomingCli(parentCli *clim.Command) *clim.Command {
-	cli := parentCli.AddParser("incoming",
+func newIncomingCLI(parentCli *clim.CLI) *clim.CLI {
+	cli := parentCli.AddCLI("incoming",
 		"show new changesets found in source")
 
 	incomingCmd := incomingCmd{}
@@ -56,7 +56,7 @@ func newIncomingCli(parentCli *clim.Command) *clim.Command {
 		Short: "r", Long: "rev", Label: "REV[,REV,..]",
 		Desc: "remote changeset(s) intended to be added"})
 
-	cli.Action(func() error { return incomingCmd.Run() })
+	cli.SetAction(func() error { return incomingCmd.Run() })
 
 	return cli
 }

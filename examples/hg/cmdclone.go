@@ -11,8 +11,8 @@ type cloneCmd struct {
 	updateRev string
 }
 
-func newCloneCli(parentCli *clim.Command) *clim.Command {
-	cli := parentCli.AddParser("clone",
+func newCloneCLI(parentCli *clim.CLI) *clim.CLI {
+	cli := parentCli.AddCLI("clone",
 		"make a copy of an existing repository")
 
 	cloneCmd := cloneCmd{}
@@ -24,7 +24,7 @@ func newCloneCli(parentCli *clim.Command) *clim.Command {
 		Short: "u", Long: "updaterev", Label: "REV",
 		Desc: "revision, tag, or branch to check out"})
 
-	cli.Action(func() error { return cloneCmd.Run() })
+	cli.SetAction(func() error { return cloneCmd.Run() })
 
 	return cli
 }

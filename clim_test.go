@@ -27,8 +27,10 @@ func TestSimpleHelp(t *testing.T) {
 	})
 	cli.AddFlag(&clim.Flag{
 		Value: clim.String(&args.wall, "cardboard"),
-		Long:  "wall",
-		Desc:  "Type of wall",
+		// Short is optional, here we don't set it.
+		Long: "wall",
+		// Default for Label: uppercase(Long)
+		Desc: "Type of wall",
 	})
 	cli.AddFlag(&clim.Flag{
 		Value: clim.Bool(&args.dryRun, false),

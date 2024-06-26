@@ -31,19 +31,19 @@ func mainInt() int {
 }
 
 func mainErr() error {
-	rootCli := clim.New("hg", "Mercurial Distributed SCM")
+	rootCLI := clim.New("hg", "Mercurial Distributed SCM")
 
 	//
-	cloneCli := newCloneCli(rootCli)
-	initCmd := newInitCli(rootCli)
-	rootCli.Group("Repository creation", cloneCli, initCmd)
+	cloneCLI := newCloneCLI(rootCLI)
+	initCLI := newInitCLI(rootCLI)
+	rootCLI.Group("Repository creation", cloneCLI, initCLI)
 
 	//
-	incomingCmd := newIncomingCli(rootCli)
-	outgoingCmd := newOutgoingCli(rootCli)
-	rootCli.Group("Remote repository management", incomingCmd, outgoingCmd)
+	incomingCLI := newIncomingCLI(rootCLI)
+	outgoingCLI := newOutgoingCLI(rootCLI)
+	rootCLI.Group("Remote repository management", incomingCLI, outgoingCLI)
 
-	action, err := rootCli.Parse(os.Args[1:])
+	action, err := rootCLI.Parse(os.Args[1:])
 	if err != nil {
 		return err
 	}

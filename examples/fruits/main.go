@@ -37,7 +37,7 @@ type Args struct {
 func mainErr() error {
 	var args Args
 	cli := clim.New("bang", "bangs head against wall")
-	cli.Action(func() error { return run(args) })
+	cli.SetAction(func() error { return run(args) })
 
 	cli.AddFlag(&clim.Flag{Value: clim.Int(&args.count, 3),
 		Short: "c", Long: "count", Label: "N", Desc: "How many times"})
