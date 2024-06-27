@@ -36,6 +36,7 @@ type CLI struct {
 	desc        string
 	long2flag   map[string]*Flag
 	short2long  map[string]string
+	longSeen    map[string]struct{} // Options seen on the command-line
 	positionals []string
 	//
 	parent  string
@@ -60,6 +61,7 @@ func New(name string, desc string) *CLI {
 		desc:       desc,
 		long2flag:  make(map[string]*Flag),
 		short2long: make(map[string]string),
+		longSeen:   map[string]struct{}{},
 	}
 }
 
@@ -160,10 +162,11 @@ func (cmd *CLI) Args() []string {
 func (cli *CLI) Parse(args []string) (func() error, error) {
 	index := 0
 	for {
-		offset, err := cli.parseOne(args[index:])
+		long, offset, err := cli.parseOne(args[index:])
 		if err != nil {
 			return nil, err
 		}
+		cli.longSeen[long] = struct{}{}
 		if offset == 0 {
 			// Arrived at the end of args or at the end of the flags.
 			break
@@ -171,11 +174,28 @@ func (cli *CLI) Parse(args []string) (func() error, error) {
 		index += offset
 	}
 
+	// Are we missing any required options?
+	var missing []string
+	for name, flag := range cli.long2flag {
+		if !flag.Required {
+			continue
+		}
+		if _, found := cli.longSeen[name]; !found {
+			missing = append(missing, name)
+		}
+	}
+	if len(missing) > 0 {
+		slices.Sort(missing)
+		return nil, ParseError("missing required options: %s",
+			strings.Join(missing, ", "))
+	}
+
 	cli.positionals = args[index:]
 
 	if len(cli.subCLIs) == 0 {
 		return cli.run, nil
 	}
+
 	// If we are here, we have subcommands.
 
 	if len(cli.positionals) == 0 {
@@ -194,14 +214,22 @@ func (cli *CLI) Parse(args []string) (func() error, error) {
 // _                           0  1              2            34  5
 var flagRE = regexp.MustCompile(`^(?P<hyphens>-*)(?P<name>.*?)((=)(?P<value>.+))?$`)
 
-func (cli *CLI) parseOne(args []string) (int, error) {
+// parseOne parses the first option in 'args', handling all possible cases:
+// --foo bar              consumes two items in 'args'
+// --foo=bar              consumes one item in 'args'
+// --zoo     (boolean)    consumes one item in 'args'
+// end of options, beginning of positional arguments
+//
+// it returns the tuple (long, number_of_items_consumed (0, 1 or 2), error).
+// long is used by the caller to enforce required options.
+func (cli *CLI) parseOne(args []string) (string, int, error) {
 	if len(args) == 0 {
-		return 0, nil
+		return "", 0, nil
 	}
 	token := args[0]
 	matches := flagRE.FindStringSubmatch(token)
 	if len(matches) != 6 {
-		return 0,
+		return "", 0,
 			ParseError("clim internal error (regex); token: %q, matches: %q",
 				token, matches)
 	}
@@ -212,12 +240,12 @@ func (cli *CLI) parseOne(args []string) (int, error) {
 	// Any token with no hyphen suffix or with hyphen suffix of more than two is
 	// a positional argument.
 	if len(hyphens) == 0 || len(hyphens) > 2 {
-		return 0, nil
+		return "", 0, nil
 	}
 
 	// Special case: help
 	if name == "h" || name == "help" {
-		return 0, cli.usage()
+		return "", 0, cli.usage()
 	}
 
 	// Now we expect either a flag (short or long) or a parse error.
@@ -226,37 +254,37 @@ func (cli *CLI) parseOne(args []string) (int, error) {
 	if len(name) == 1 {
 		long = cli.short2long[name]
 		if long == "" {
-			return 0, ParseError("unrecognized flag %q", token)
+			return "", 0, ParseError("unrecognized flag %q", token)
 		}
 	}
 	flag := cli.long2flag[long]
 	if flag == nil {
-		return 0, ParseError("unrecognized flag %q", token)
+		return "", 0, ParseError("unrecognized flag %q", token)
 	}
 
 	// Was the value provided in the same token, with "=" ?
 	if len(value) > 0 {
 		if err := flag.Value.Set(value); err != nil {
-			return 0, ParseError("setting %q: %s", token, err)
+			return "", 0, ParseError("setting %q: %s", token, err)
 		}
-		return 1, nil
+		return long, 1, nil
 	}
 
 	if IsBoolValue(flag.Value) {
 		if err := flag.Value.Set("true"); err != nil {
-			return 0, ParseError("setting %q: %s", token, err)
+			return "", 0, ParseError("setting %q: %s", token, err)
 		}
-		return 1, nil
+		return long, 1, nil
 	}
 
 	if len(args) == 1 {
-		return 0, ParseError("flag %q requires a value", token)
+		return "", 0, ParseError("flag %q requires a value", token)
 	}
 	nextValue := args[1]
 	if err := flag.Value.Set(nextValue); err != nil {
-		return 0, ParseError("setting %q %q: %s", token, nextValue, err)
+		return "", 0, ParseError("setting %q %q: %s", token, nextValue, err)
 	}
-	return 2, nil
+	return long, 2, nil
 }
 
 func (cli *CLI) usage() error {
@@ -329,8 +357,11 @@ func (cli *CLI) usageOptions() string {
 	for i, long := range longs {
 		flag := cli.long2flag[long]
 		fmt.Fprintf(&bld, "%-*s%s", maxColWidth+gutter, lines[i], flag.Desc)
-		if flag.defValue != "" {
+		if flag.defValue != "" && !flag.Required {
 			fmt.Fprintf(&bld, " (default: %s)", flag.defValue)
+		}
+		if flag.Required {
+			fmt.Fprintf(&bld, " (required)")
 		}
 		fmt.Fprintf(&bld, "\n")
 	}

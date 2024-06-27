@@ -257,3 +257,112 @@ func TestArgs(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) { test(t, tc) })
 	}
 }
+
+func TestRequiredHelp(t *testing.T) {
+	var count int
+	var level int
+	cli := clim.New("bang", "bang head")
+	cli.AddFlag(&clim.Flag{
+		// Default value with Required, will be ignored also in the help.
+		Value:    clim.Int(&count, 3),
+		Long:     "count",
+		Required: true,
+	})
+	cli.AddFlag(&clim.Flag{
+		// Default value without Required, normal handling.
+		Value: clim.Int(&level, 5),
+		Long:  "level",
+	})
+
+	want := strings.TrimSpace(`
+bang -- bang head
+
+Usage: bang [options]
+
+Options:
+
+ --count COUNT     (required)
+ --level LEVEL     (default: 5)
+
+ -h, --help       Print this help and exit
+`)
+
+	_, err := cli.Parse([]string{"-h"})
+
+	qt.Assert(t, qt.ErrorIs(err, clim.ErrHelp))
+	qt.Assert(t, qt.Equals(err.Error(), want))
+}
+
+func TestRequireSuccess(t *testing.T) {
+	var count int
+	var level int
+	cli := clim.New("bang", "bang head")
+	cli.AddFlag(&clim.Flag{
+		// Default value with Required, will be ignored also in the help.
+		Value:    clim.Int(&count, 3),
+		Long:     "count",
+		Required: true,
+	})
+	cli.AddFlag(&clim.Flag{
+		// Default value without Required, normal handling.
+		Value: clim.Int(&level, 5),
+		Long:  "level",
+	})
+
+	_, err := cli.Parse([]string{"--count=1"})
+
+	qt.Check(t, qt.IsNil(err))
+	qt.Check(t, qt.Equals(count, 1)) // parsed
+	qt.Check(t, qt.Equals(level, 5)) // from default value
+}
+
+func TestRequiredFailure(t *testing.T) {
+	var count int
+	var level int
+	var foo int
+	cli := clim.New("bang", "bang head")
+	cli.AddFlag(&clim.Flag{
+		Value:    clim.Int(&count, 3),
+		Long:     "count",
+		Required: true,
+	})
+	cli.AddFlag(&clim.Flag{
+		// Default value without Required, normal handling.
+		Value: clim.Int(&level, 5),
+		Long:  "level",
+	})
+	cli.AddFlag(&clim.Flag{
+		Value:    clim.Int(&foo, 3),
+		Long:     "foo",
+		Required: true,
+	})
+
+	_, err := cli.Parse(nil)
+
+	qt.Assert(t, qt.ErrorIs(err, clim.ErrParse))
+	qt.Assert(t, qt.Equals(err.Error(), `missing required options: count, foo`))
+}
+
+func TestSubCommandRequiredFailure(t *testing.T) {
+	var count int
+	var foo int
+
+	cli := clim.New("bang", "bang head")
+	cli.AddFlag(&clim.Flag{
+		Value:    clim.Int(&count, 0),
+		Long:     "count",
+		Required: true,
+	})
+
+	subCli := cli.AddCLI("sub", "I am a subcommand")
+	subCli.AddFlag(&clim.Flag{
+		Value:    clim.Int(&foo, 0),
+		Long:     "foo",
+		Required: true,
+	})
+
+	_, err := cli.Parse([]string{"--count=22", "sub"})
+
+	qt.Assert(t, qt.ErrorIs(err, clim.ErrParse))
+	qt.Assert(t, qt.Equals(err.Error(), `missing required options: foo`))
+}
