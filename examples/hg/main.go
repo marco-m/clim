@@ -36,12 +36,12 @@ func mainErr() error {
 	//
 	cloneCLI := newCloneCLI(rootCLI)
 	initCLI := newInitCLI(rootCLI)
-	rootCLI.Group("Repository creation", cloneCLI, initCLI)
+	rootCLI.AddGroup("Repository creation", cloneCLI, initCLI)
 
 	//
 	incomingCLI := newIncomingCLI(rootCLI)
 	outgoingCLI := newOutgoingCLI(rootCLI)
-	rootCLI.Group("Remote repository management", incomingCLI, outgoingCLI)
+	rootCLI.AddGroup("Remote repository management", incomingCLI, outgoingCLI)
 
 	action, err := rootCLI.Parse(os.Args[1:])
 	if err != nil {

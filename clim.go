@@ -17,20 +17,22 @@ var (
 	ErrParse = errors.New("")
 )
 
-// ParseError returns an error that unwraps to [ErrParse].
+// ParseError creates an error that unwraps to [ErrParse].
 // A user implementation of [Value] should use this function to return a parse
-// error, so that the recommended mainInt() can stay generic.
+// error, so that the recommended mainInt function (see in directory examples)
+// can stay generic.
 func ParseError(format string, a ...any) error {
 	return fmt.Errorf("%w%s", ErrParse, fmt.Sprintf(format, a...))
 }
 
-// helpError returns an error that unwraps to [ErrHelp].
+// helpError creates an error that unwraps to [ErrHelp].
+// See in directory examples how to handle it.
 func helpError(format string, a ...any) error {
 	return fmt.Errorf("%w%s", ErrHelp, fmt.Sprintf(format, a...))
 }
 
-// CLI represents the top-level command, created with New(), and any
-// subcommands, created with CLI.AddCLI(). A [Flag] is added with [CLI.AddFlag].
+// CLI represents the top-level command, created with [New], and any
+// subcommands, created with [CLI.AddCLI]. A [Flag] is added with [CLI.AddFlag].
 type CLI struct {
 	name        string
 	desc        string
@@ -65,10 +67,10 @@ func New(name string, desc string) *CLI {
 	}
 }
 
-// AddFlag adds 'flag' to 'cli'.
+// AddFlag adds a [Flag] to cli.
 // The type and value of the flag are represented by the field [Flag.Value],
 // which holds either one of the implementation of [Value] from the clim package
-// (see file values.go) or a user-defined one.
+// (e.g. [Int], [IntSlice], [Bool], ...) or a user-defined one.
 //
 // Taken from std/flag and adapted.
 func (cli *CLI) AddFlag(flag *Flag) {
@@ -127,7 +129,7 @@ func (cli *CLI) AddFlag(flag *Flag) {
 	}
 
 	flag.defValue = flag.Value.String()
-	if flag.Label == "" && !IsBoolValue(flag.Value) {
+	if flag.Label == "" && !isBoolValue(flag.Value) {
 		flag.Label = strings.ToUpper(flag.Long)
 	}
 
@@ -137,7 +139,7 @@ func (cli *CLI) AddFlag(flag *Flag) {
 	cli.long2flag[flag.Long] = flag
 }
 
-// AddCLI adds sub CLI (subcommand) 'name' with 'desc'.
+// AddCLI adds a sub CLI, that is, a subcommand, with name and desc.
 func (cli *CLI) AddCLI(name string, desc string) *CLI {
 	subCLI := New(name, desc)
 	subCLI.parent = cli.name
@@ -145,8 +147,9 @@ func (cli *CLI) AddCLI(name string, desc string) *CLI {
 	return subCLI
 }
 
-func (cli *CLI) Group(name string, commands ...*CLI) {
-	cli.groups = append(cli.groups, cliGroup{name, commands})
+// AddGroup adds the subclis to the group name.
+func (cli *CLI) AddGroup(name string, clis ...*CLI) {
+	cli.groups = append(cli.groups, cliGroup{name, clis})
 }
 
 // Args returns the positional arguments, if any.
@@ -155,6 +158,11 @@ func (cli *CLI) Group(name string, commands ...*CLI) {
 // arguments parsing.
 func (cmd *CLI) Args() []string {
 	return cmd.positionals
+}
+
+// SetActions records fn to be returned by a successful Parse.
+func (cli *CLI) SetAction(fn func() error) {
+	cli.action = fn
 }
 
 // Parse recursively processes args, calling the needed subCLI, and returns
@@ -270,7 +278,7 @@ func (cli *CLI) parseOne(args []string) (string, int, error) {
 		return long, 1, nil
 	}
 
-	if IsBoolValue(flag.Value) {
+	if isBoolValue(flag.Value) {
 		if err := flag.Value.Set("true"); err != nil {
 			return "", 0, ParseError("setting %q: %s", token, err)
 		}
@@ -372,10 +380,6 @@ func (cli *CLI) usageOptions() string {
 	fmt.Fprintf(&bld, "%-*s%s", maxColWidth+gutter,
 		" -h, --help", "Print this help and exit")
 	return bld.String()
-}
-
-func (cli *CLI) SetAction(fn func() error) {
-	cli.action = fn
 }
 
 func (cli *CLI) run() error {
