@@ -1,6 +1,7 @@
 # 🫧  clim  🫧
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/marco-m/clim.svg)](https://pkg.go.dev/github.com/marco-m/clim)
+[![Build Status](https://api.cirrus-ci.com/github/marco-m/clim.svg?branch=master)](https://cirrus-ci.com/github/marco-m/clim)
 
 Command-line argument parsing for Go:
 
