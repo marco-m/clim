@@ -2,6 +2,7 @@ package clim_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/go-quicktest/qt"
 
@@ -209,4 +210,26 @@ func TestParseBoolFailure(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) { test(t, tc) })
 	}
+}
+
+func TestParseDurationSuccess(t *testing.T) {
+	var timeout time.Duration
+	cli := clim.New("bang", "bangs head against wall")
+	cli.AddFlag(&clim.Flag{Value: clim.Duration(&timeout, 0),
+		Long: "timeout"})
+
+	_, err := cli.Parse([]string{"--timeout=32m4ms"})
+	qt.Assert(t, qt.IsNil(err))
+	qt.Assert(t, qt.Equals(timeout, 32*time.Minute+4*time.Millisecond))
+}
+
+func TestParseDurationFailure(t *testing.T) {
+	var timeout time.Duration
+	cli := clim.New("bang", "bangs head against wall")
+	cli.AddFlag(&clim.Flag{Value: clim.Duration(&timeout, 0),
+		Long: "timeout"})
+
+	_, err := cli.Parse([]string{"--timeout=78"})
+	qt.Assert(t, qt.ErrorMatches(err,
+		`setting "--timeout=78": time: missing unit in duration "78"`))
 }
