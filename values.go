@@ -199,7 +199,6 @@ func Duration(dst *time.Duration, defval time.Duration) *durationValue {
 
 // Set will be called by the parsing machinery.
 func (i *durationValue) Set(s string) error {
-	time.ParseDuration(s)
 	v, err := time.ParseDuration(s)
 	if err != nil {
 		return err

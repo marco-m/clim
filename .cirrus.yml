@@ -23,7 +23,7 @@ task:
   name: GolangCI Lint
   container:
     image: golangci/golangci-lint:latest
-  run_script: golangci-lint run -v --out-format json > lint-report.json
+  run_script: golangci-lint run
   always:
     golangci_artifacts:
       path: lint-report.json
