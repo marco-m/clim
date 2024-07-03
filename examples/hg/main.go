@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -47,5 +48,8 @@ func mainErr() error {
 	if err != nil {
 		return err
 	}
-	return action()
+
+	ctx := context.Background()
+
+	return action(ctx)
 }

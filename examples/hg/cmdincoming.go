@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/marco-m/clim"
@@ -56,12 +57,12 @@ func newIncomingCLI(parentCli *clim.CLI) *clim.CLI {
 		Short: "r", Long: "rev", Label: "REV[,REV,..]",
 		Desc: "remote changeset(s) intended to be added"})
 
-	cli.SetAction(func() error { return incomingCmd.Run() })
+	cli.SetAction(incomingCmd.Run)
 
 	return cli
 }
 
-func (cmd *incomingCmd) Run() error {
+func (cmd *incomingCmd) Run(ctx context.Context) error {
 	fmt.Println("hello from IncomingCmd Run")
 	fmt.Printf("%#+v\n", cmd)
 	return nil

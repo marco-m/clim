@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/marco-m/clim"
@@ -24,12 +25,12 @@ func newCloneCLI(parentCli *clim.CLI) *clim.CLI {
 		Short: "u", Long: "updaterev", Label: "REV",
 		Desc: "revision, tag, or branch to check out"})
 
-	cli.SetAction(func() error { return cloneCmd.Run() })
+	cli.SetAction(cloneCmd.Run)
 
 	return cli
 }
 
-func (cmd *cloneCmd) Run() error {
+func (cmd *cloneCmd) Run(ctx context.Context) error {
 	fmt.Println("hello from CloneCmd Run")
 	fmt.Printf("%#+v\n", cmd)
 	return nil

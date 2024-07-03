@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Value is the interface for a type to be parsable by clim.
@@ -182,3 +183,29 @@ func (b *boolValue) Set(s string) error {
 func (b *boolValue) String() string { return strconv.FormatBool(bool(*b)) }
 
 func (b *boolValue) IsBoolFlag() bool { return true }
+
+//
+// time.Duration Value
+//
+
+type durationValue time.Duration
+
+// Duration creates a [Value] that parses a time.Duration into dst.
+// See also [Flag] and [CLI.AddFlag].
+func Duration(dst *time.Duration, defval time.Duration) *durationValue {
+	*dst = defval
+	return (*durationValue)(dst)
+}
+
+// Set will be called by the parsing machinery.
+func (i *durationValue) Set(s string) error {
+	v, err := time.ParseDuration(s)
+	if err != nil {
+		return err
+	}
+	*i = durationValue(v)
+	return nil
+}
+
+// String is called by help to print the default value.
+func (i *durationValue) String() string { return time.Duration(*i).String() }
