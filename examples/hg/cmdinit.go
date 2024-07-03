@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/marco-m/clim"
@@ -39,12 +40,12 @@ func newInitCLI(parentCli *clim.CLI) *clim.CLI {
 	cli.AddFlag(&clim.Flag{Value: clim.Bool(&initCmd.mq, false),
 		Long: "mq", Desc: "operate on patch repository"})
 
-	cli.SetAction(func() error { return initCmd.Run() })
+	cli.SetAction(initCmd.Run)
 
 	return cli
 }
 
-func (cmd *initCmd) Run() error {
+func (cmd *initCmd) Run(ctx context.Context) error {
 	fmt.Println("hello from InitCmd Run")
 	fmt.Printf("%#+v\n", cmd)
 	return nil

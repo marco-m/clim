@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -37,7 +38,7 @@ type Args struct {
 func mainErr() error {
 	var args Args
 	cli := clim.New("bang", "bangs head against wall")
-	cli.SetAction(func() error { return run(args) })
+	cli.SetAction(args.run)
 
 	cli.AddFlag(&clim.Flag{Value: clim.Int(&args.count, 3),
 		Short: "c", Long: "count", Label: "N", Desc: "How many times"})
@@ -53,10 +54,13 @@ func mainErr() error {
 	if err != nil {
 		return err
 	}
-	return action()
+
+	ctx := context.Background()
+
+	return action(ctx)
 }
 
-func run(args Args) error {
+func (args *Args) run(ctx context.Context) error {
 	for i := range args.count {
 		fmt.Println(i+1, "bang against", args.wall)
 	}

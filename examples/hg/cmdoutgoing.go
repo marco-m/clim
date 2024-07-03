@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/marco-m/clim"
@@ -54,12 +55,12 @@ func newOutgoingCLI(parentCli *clim.CLI) *clim.CLI {
 	cli.AddFlag(&clim.Flag{Value: clim.Bool(&outgoingCmd.bookmarks, false),
 		Short: "B", Long: "bookmarks", Desc: "compare bookmarks"})
 
-	cli.SetAction(func() error { return outgoingCmd.Run() })
+	cli.SetAction(outgoingCmd.Run)
 
 	return cli
 }
 
-func (cmd *outgoingCmd) Run() error {
+func (cmd *outgoingCmd) Run(ctx context.Context) error {
 	fmt.Println("hello from OutgoingCmd Run")
 	fmt.Printf("%#+v\n", cmd)
 	return nil
