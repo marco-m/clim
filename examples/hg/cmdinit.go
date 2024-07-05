@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/marco-m/clim"
@@ -45,7 +44,7 @@ func newInitCLI(parentCli *clim.CLI) *clim.CLI {
 	return cli
 }
 
-func (cmd *initCmd) Run(ctx context.Context) error {
+func (cmd *initCmd) Run(uctx any) error {
 	fmt.Println("hello from InitCmd Run")
 	fmt.Printf("%#+v\n", cmd)
 	return nil

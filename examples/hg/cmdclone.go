@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/marco-m/clim"
@@ -30,7 +29,7 @@ func newCloneCLI(parentCli *clim.CLI) *clim.CLI {
 	return cli
 }
 
-func (cmd *cloneCmd) Run(ctx context.Context) error {
+func (cmd *cloneCmd) Run(uctx any) error {
 	fmt.Println("hello from CloneCmd Run")
 	fmt.Printf("%#+v\n", cmd)
 	return nil

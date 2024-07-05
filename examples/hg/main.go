@@ -17,7 +17,7 @@ func main() {
 }
 
 func mainInt() int {
-	err := mainErr()
+	err := mainErr(os.Args[1:])
 	if err == nil {
 		return 0
 	}
@@ -31,7 +31,7 @@ func mainInt() int {
 	return 1
 }
 
-func mainErr() error {
+func mainErr(args []string) error {
 	rootCLI := clim.New("hg", "Mercurial Distributed SCM")
 
 	//
@@ -44,7 +44,7 @@ func mainErr() error {
 	outgoingCLI := newOutgoingCLI(rootCLI)
 	rootCLI.AddGroup("Remote repository management", incomingCLI, outgoingCLI)
 
-	action, err := rootCLI.Parse(os.Args[1:])
+	action, err := rootCLI.Parse(args)
 	if err != nil {
 		return err
 	}

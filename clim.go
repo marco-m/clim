@@ -1,7 +1,6 @@
 package clim
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"regexp"
@@ -44,7 +43,7 @@ type CLI struct {
 	//
 	parent  string
 	subCLIs []*CLI
-	action  func(ctx context.Context) error
+	action  func(uctx any) error
 	groups  []cliGroup
 }
 
@@ -162,13 +161,13 @@ func (cmd *CLI) Args() []string {
 }
 
 // SetActions records fn to be returned by a successful Parse.
-func (cli *CLI) SetAction(fn func(ctx context.Context) error) {
+func (cli *CLI) SetAction(fn func(uctx any) error) {
 	cli.action = fn
 }
 
 // Parse recursively processes args, calling the needed subCLI, and returns
 // the associated action.
-func (cli *CLI) Parse(args []string) (func(ctx context.Context) error, error) {
+func (cli *CLI) Parse(args []string) (func(uctx any) error, error) {
 	index := 0
 	for {
 		long, offset, err := cli.parseOne(args[index:])
@@ -383,9 +382,9 @@ func (cli *CLI) usageOptions() string {
 	return bld.String()
 }
 
-func (cli *CLI) run(ctx context.Context) error {
+func (cli *CLI) run(uctx any) error {
 	if cli.action == nil {
 		return ParseError("command %q: no action registered", cli.name)
 	}
-	return cli.action(ctx)
+	return cli.action(uctx)
 }
