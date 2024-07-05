@@ -314,16 +314,26 @@ func (cli *CLI[T]) usage() error {
 		fmt.Fprintf(&bld, "<command> ")
 	}
 	fmt.Fprintf(&bld, "[options]\n\n")
-	if len(cli.subCLIs) > 0 {
+	if len(cli.groups) > 0 {
 		fmt.Fprintf(&bld, "available commands:\n\n")
+	} else if len(cli.subCLIs) > 0 {
+		fmt.Fprintf(&bld, "Commands:\n\n")
 	}
 
-	// Render the commands, per group.
 	const gutter = 4
 	width := maxColWidth + gutter
-	for _, group := range cli.groups {
-		fmt.Fprintf(&bld, "%s:\n\n", group.name)
-		for _, cmd := range group.clis {
+
+	// Render the commands, per group.
+	if len(cli.groups) > 0 {
+		for _, group := range cli.groups {
+			fmt.Fprintf(&bld, "%s:\n\n", group.name)
+			for _, cmd := range group.clis {
+				fmt.Fprintf(&bld, " %-*s%s\n", width, cmd.name, cmd.desc)
+			}
+			fmt.Fprintln(&bld)
+		}
+	} else if len(cli.subCLIs) > 0 {
+		for _, cmd := range cli.subCLIs {
 			fmt.Fprintf(&bld, " %-*s%s\n", width, cmd.name, cmd.desc)
 		}
 		fmt.Fprintln(&bld)

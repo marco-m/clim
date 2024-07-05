@@ -19,7 +19,7 @@ smoke_task:
     echo ====================================== &&
     go run ./examples/hg -h &&
     echo ====================================== &&
-    go run ./examples/timeout -h
+    go run ./examples/twocommands -h
 
 task:
   name: GolangCI Lint
