@@ -15,9 +15,11 @@ smoke_task:
     folder: $GOPATH/pkg/mod
   get_script: go get ./...
   test_script: |
-    go run ./examples/fruits -h &&
+    go run ./examples/bang -h &&
     echo ====================================== &&
-    go run ./examples/hg -h
+    go run ./examples/hg -h &&
+    echo ====================================== &&
+    go run ./examples/timeout -h
 
 task:
   name: GolangCI Lint
