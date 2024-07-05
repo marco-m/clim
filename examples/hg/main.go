@@ -4,7 +4,6 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -31,8 +30,10 @@ func mainInt() int {
 	return 1
 }
 
+type user struct{}
+
 func mainErr(args []string) error {
-	rootCLI := clim.New("hg", "Mercurial Distributed SCM")
+	rootCLI := clim.New[user]("hg", "Mercurial Distributed SCM", nil)
 
 	//
 	cloneCLI := newCloneCLI(rootCLI)
@@ -49,7 +50,6 @@ func mainErr(args []string) error {
 		return err
 	}
 
-	ctx := context.Background()
-
-	return action(ctx)
+	uctx := user{}
+	return action(uctx)
 }

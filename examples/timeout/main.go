@@ -38,8 +38,7 @@ func mainErr(args []string) error {
 	app := Application{
 		sleep: 20 * time.Millisecond,
 	}
-	cli := clim.New("timeout", "uses context")
-	cli.SetAction(app.run)
+	cli := clim.New("timeout", "uses context", app.run)
 
 	cli.AddFlag(&clim.Flag{Value: clim.Duration(&app.timeout, 100*time.Millisecond),
 		Long: "timeout", Desc: "Context timeout (eg: 1h34m20s4ms)"})
@@ -52,17 +51,14 @@ func mainErr(args []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), app.timeout)
 	defer cancel()
 
-	return action(&user{ctx})
+	return action(user{ctx})
 }
 
 type user struct {
 	ctx context.Context
 }
 
-func (app *Application) run(uctx any) error {
-	// Type assertion (https://go.dev/tour/methods/15)
-	user := uctx.(*user)
-
+func (app *Application) run(user user) error {
 	count := 1
 	for {
 		select {

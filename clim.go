@@ -33,7 +33,7 @@ func helpError(format string, a ...any) error {
 
 // CLI represents the top-level command, created with [New], and any
 // subcommands, created with [CLI.AddCLI]. A [Flag] is added with [CLI.AddFlag].
-type CLI struct {
+type CLI[T any] struct {
 	name        string
 	desc        string
 	long2flag   map[string]*Flag
@@ -42,25 +42,27 @@ type CLI struct {
 	positionals []string
 	//
 	parent  string
-	subCLIs []*CLI
-	action  func(uctx any) error
-	groups  []cliGroup
+	subCLIs []*CLI[T]
+	action  func(uctx T) error
+	groups  []cliGroup[T]
 }
 
-type cliGroup struct {
+type cliGroup[T any] struct {
 	name string
-	clis []*CLI
+	clis []*CLI[T]
 }
 
-// New creates the top-level [CLI], representing the program itself.
+// New creates the top-level [CLI], representing the program itself,
+// and sets action, to be returned by a successful parse.
 // See [CLI.AddCLI] to add a sub CLI (subcommand).
-func New(name string, desc string) *CLI {
+func New[T any](name string, desc string, action func(uctx T) error) *CLI[T] {
 	if name == "" {
 		panic("clim.New: name cannot be empty")
 	}
-	return &CLI{
+	return &CLI[T]{
 		name:       name,
 		desc:       desc,
+		action:     action,
 		long2flag:  make(map[string]*Flag),
 		short2long: make(map[string]string),
 		longSeen:   map[string]struct{}{},
@@ -73,7 +75,7 @@ func New(name string, desc string) *CLI {
 // (e.g. [Int], [IntSlice], [Bool], ...) or a user-defined one.
 //
 // Taken from std/flag and adapted.
-func (cli *CLI) AddFlag(flag *Flag) {
+func (cli *CLI[T]) AddFlag(flag *Flag) {
 	//
 	// Validate the short flag.
 	//
@@ -139,35 +141,31 @@ func (cli *CLI) AddFlag(flag *Flag) {
 	cli.long2flag[flag.Long] = flag
 }
 
-// AddCLI adds a sub CLI, that is, a subcommand, with name and desc.
-func (cli *CLI) AddCLI(name string, desc string) *CLI {
-	subCLI := New(name, desc)
+// AddCLI adds a sub CLI, that is, a subcommand, with name and desc,
+// and sets action, to be returned by a successful parse.
+func (cli *CLI[T]) AddCLI(name string, desc string, action func(uctx T) error) *CLI[T] {
+	subCLI := New[T](name, desc, action)
 	subCLI.parent = cli.name
 	cli.subCLIs = append(cli.subCLIs, subCLI)
 	return subCLI
 }
 
 // AddGroup adds the subclis to the group name.
-func (cli *CLI) AddGroup(name string, clis ...*CLI) {
-	cli.groups = append(cli.groups, cliGroup{name, clis})
+func (cli *CLI[T]) AddGroup(name string, clis ...*CLI[T]) {
+	cli.groups = append(cli.groups, cliGroup[T]{name, clis})
 }
 
 // Args returns the positional arguments, if any.
 // Must be called after Parse.
 // WARNING will probably disappear, replaced by support for positional
 // arguments parsing.
-func (cmd *CLI) Args() []string {
+func (cmd *CLI[T]) Args() []string {
 	return cmd.positionals
-}
-
-// SetActions records fn to be returned by a successful Parse.
-func (cli *CLI) SetAction(fn func(uctx any) error) {
-	cli.action = fn
 }
 
 // Parse recursively processes args, calling the needed subCLI, and returns
 // the associated action.
-func (cli *CLI) Parse(args []string) (func(uctx any) error, error) {
+func (cli *CLI[T]) Parse(args []string) (func(uctx T) error, error) {
 	index := 0
 	for {
 		long, offset, err := cli.parseOne(args[index:])
@@ -230,7 +228,7 @@ var flagRE = regexp.MustCompile(`^(?P<hyphens>-*)(?P<name>.*?)((=)(?P<value>.+))
 //
 // it returns the tuple (long, number_of_items_consumed (0, 1 or 2), error).
 // long is used by the caller to enforce required options.
-func (cli *CLI) parseOne(args []string) (string, int, error) {
+func (cli *CLI[T]) parseOne(args []string) (string, int, error) {
 	if len(args) == 0 {
 		return "", 0, nil
 	}
@@ -295,7 +293,7 @@ func (cli *CLI) parseOne(args []string) (string, int, error) {
 	return long, 2, nil
 }
 
-func (cli *CLI) usage() error {
+func (cli *CLI[T]) usage() error {
 	var bld strings.Builder
 
 	// Calculate the max width of the first column of commands.
@@ -334,7 +332,7 @@ func (cli *CLI) usage() error {
 	return helpError("%s", bld.String()+cli.usageOptions())
 }
 
-func (cli *CLI) usageOptions() string {
+func (cli *CLI[T]) usageOptions() string {
 	// First pass. Sort keys.
 	longs := maps.Keys(cli.long2flag)
 	slices.Sort(longs)
@@ -382,7 +380,7 @@ func (cli *CLI) usageOptions() string {
 	return bld.String()
 }
 
-func (cli *CLI) run(uctx any) error {
+func (cli *CLI[T]) run(uctx T) error {
 	if cli.action == nil {
 		return ParseError("command %q: no action registered", cli.name)
 	}

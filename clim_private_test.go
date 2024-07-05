@@ -15,7 +15,7 @@ func TestUsage(t *testing.T) {
 		dryRun bool
 	}
 	var args Args
-	cli := New("bang", "bangs head against wall")
+	cli := New[any]("bang", "bangs head against wall", nil)
 	cli.AddFlag(&Flag{Value: Int(&args.count, 3),
 		Short: "c", Long: "count", Label: "N", Desc: "How many times"})
 	cli.AddFlag(&Flag{Value: String(&args.wall, "cardboard"),

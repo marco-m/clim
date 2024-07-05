@@ -18,7 +18,7 @@ func TestParseIntSuccess(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var count int
-		cli := clim.New("bang", "bangs head against wall")
+		cli := clim.New[any]("bang", "bangs head against wall", nil)
 		cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 3),
 			Short: "c", Long: "count"})
 
@@ -64,7 +64,7 @@ func TestParseIntFailure(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var count int
-		cli := clim.New("bang", "bangs head against wall")
+		cli := clim.New[any]("bang", "bangs head against wall", nil)
 		cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 3),
 			Short: "c", Long: "count"})
 
@@ -94,7 +94,7 @@ func TestParseString(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var fruit string
-		cli := clim.New("bang", "bangs head against wall")
+		cli := clim.New[any]("bang", "bangs head against wall", nil)
 		cli.AddFlag(&clim.Flag{Value: clim.String(&fruit, "banana"),
 			Short: "f", Long: "fruit"})
 
@@ -140,7 +140,7 @@ func TestParseBoolSuccess(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var sliced bool
-		cli := clim.New("bang", "bangs head against wall")
+		cli := clim.New[any]("bang", "bangs head against wall", nil)
 		cli.AddFlag(&clim.Flag{Value: clim.Bool(&sliced, false),
 			Short: "s", Long: "sliced"})
 
@@ -191,7 +191,7 @@ func TestParseBoolFailure(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var sliced bool
-		cli := clim.New("bang", "bangs head against wall")
+		cli := clim.New[any]("bang", "bangs head against wall", nil)
 		cli.AddFlag(&clim.Flag{Value: clim.Bool(&sliced, false),
 			Short: "s", Long: "sliced"})
 
@@ -214,7 +214,7 @@ func TestParseBoolFailure(t *testing.T) {
 
 func TestParseDurationSuccess(t *testing.T) {
 	var timeout time.Duration
-	cli := clim.New("bang", "bangs head against wall")
+	cli := clim.New[any]("bang", "bangs head against wall", nil)
 	cli.AddFlag(&clim.Flag{Value: clim.Duration(&timeout, 0),
 		Long: "timeout"})
 
@@ -225,7 +225,7 @@ func TestParseDurationSuccess(t *testing.T) {
 
 func TestParseDurationFailure(t *testing.T) {
 	var timeout time.Duration
-	cli := clim.New("bang", "bangs head against wall")
+	cli := clim.New[any]("bang", "bangs head against wall", nil)
 	cli.AddFlag(&clim.Flag{Value: clim.Duration(&timeout, 0),
 		Long: "timeout"})
 

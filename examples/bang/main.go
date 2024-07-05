@@ -36,8 +36,7 @@ type Application struct {
 
 func mainErr(args []string) error {
 	var app Application
-	cli := clim.New("bang", "bangs head against wall")
-	cli.SetAction(app.run)
+	cli := clim.New("bang", "bangs head against wall", app.run)
 
 	cli.AddFlag(&clim.Flag{Value: clim.Int(&app.count, 3),
 		Short: "c", Long: "count", Label: "N", Desc: "How many times"})
@@ -54,10 +53,10 @@ func mainErr(args []string) error {
 		return err
 	}
 
-	return action(nil)
+	return action(0)
 }
 
-func (args *Application) run(uctx any) error {
+func (args *Application) run(uctx int) error {
 	for i := range args.count {
 		fmt.Println(i+1, "bang against", args.wall)
 	}
