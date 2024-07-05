@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/marco-m/clim"
@@ -28,11 +27,12 @@ type initCmd struct {
 	mq        bool
 }
 
-func newInitCLI(parentCli *clim.CLI) *clim.CLI {
-	cli := parentCli.AddCLI("init",
-		"create a new repository in the given directory")
-
+func newInitCLI(parentCli *clim.CLI[user]) *clim.CLI[user] {
 	initCmd := initCmd{}
+
+	cli := parentCli.AddCLI("init",
+		"create a new repository in the given directory",
+		initCmd.Run)
 
 	cli.AddFlag(&clim.Flag{Value: clim.String(&initCmd.remoteCmd, ""),
 		Long: "remotecmd", Label: "CMD",
@@ -40,12 +40,10 @@ func newInitCLI(parentCli *clim.CLI) *clim.CLI {
 	cli.AddFlag(&clim.Flag{Value: clim.Bool(&initCmd.mq, false),
 		Long: "mq", Desc: "operate on patch repository"})
 
-	cli.SetAction(initCmd.Run)
-
 	return cli
 }
 
-func (cmd *initCmd) Run(ctx context.Context) error {
+func (cmd *initCmd) Run(uctx user) error {
 	fmt.Println("hello from InitCmd Run")
 	fmt.Printf("%#+v\n", cmd)
 	return nil

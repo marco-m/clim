@@ -15,7 +15,7 @@ func main() {
 }
 
 func mainInt() int {
-	err := mainErr()
+	err := mainErr(os.Args[1:])
 	if err == nil {
 		return 0
 	}
@@ -34,17 +34,16 @@ type Application struct {
 	sleep   time.Duration
 }
 
-func mainErr() error {
+func mainErr(args []string) error {
 	app := Application{
 		sleep: 20 * time.Millisecond,
 	}
-	cli := clim.New("timeout", "uses context")
-	cli.SetAction(app.run)
+	cli := clim.New("timeout", "uses context", app.run)
 
 	cli.AddFlag(&clim.Flag{Value: clim.Duration(&app.timeout, 100*time.Millisecond),
 		Long: "timeout", Desc: "Context timeout (eg: 1h34m20s4ms)"})
 
-	action, err := cli.Parse(os.Args[1:])
+	action, err := cli.Parse(args)
 	if err != nil {
 		return err
 	}
@@ -52,15 +51,19 @@ func mainErr() error {
 	ctx, cancel := context.WithTimeout(context.Background(), app.timeout)
 	defer cancel()
 
-	return action(ctx)
+	return action(user{ctx})
 }
 
-func (app *Application) run(ctx context.Context) error {
+type user struct {
+	ctx context.Context
+}
+
+func (app *Application) run(user user) error {
 	count := 1
 	for {
 		select {
-		case <-ctx.Done():
-			return ctx.Err()
+		case <-user.ctx.Done():
+			return user.ctx.Err()
 		default:
 			count = doSomething(app.sleep, count)
 		}

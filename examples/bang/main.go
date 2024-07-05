@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -14,7 +13,7 @@ func main() {
 }
 
 func mainInt() int {
-	err := mainErr()
+	err := mainErr(os.Args[1:])
 	if err == nil {
 		return 0
 	}
@@ -28,39 +27,36 @@ func mainInt() int {
 	return 1
 }
 
-type Args struct {
+type Application struct {
 	count    int
 	wall     string
 	dryRun   bool
 	sequence []int
 }
 
-func mainErr() error {
-	var args Args
-	cli := clim.New("bang", "bangs head against wall")
-	cli.SetAction(args.run)
+func mainErr(args []string) error {
+	var app Application
+	cli := clim.New("bang", "bangs head against wall", app.run)
 
-	cli.AddFlag(&clim.Flag{Value: clim.Int(&args.count, 3),
+	cli.AddFlag(&clim.Flag{Value: clim.Int(&app.count, 3),
 		Short: "c", Long: "count", Label: "N", Desc: "How many times"})
-	cli.AddFlag(&clim.Flag{Value: clim.String(&args.wall, "cardboard"),
+	cli.AddFlag(&clim.Flag{Value: clim.String(&app.wall, "cardboard"),
 		Long: "wall", Desc: "Type of wall"})
-	cli.AddFlag(&clim.Flag{Value: clim.Bool(&args.dryRun, false),
+	cli.AddFlag(&clim.Flag{Value: clim.Bool(&app.dryRun, false),
 		Long: "dry-run", Desc: "Enable dry-run"})
-	cli.AddFlag(&clim.Flag{Value: clim.IntSlice(&args.sequence, []int{1, 2, 3}),
+	cli.AddFlag(&clim.Flag{Value: clim.IntSlice(&app.sequence, []int{1, 2, 3}),
 		Short: "s", Long: "sequence", Label: "N[,N,..]",
 		Desc: "bang sequence"})
 
-	action, err := cli.Parse(os.Args[1:])
+	action, err := cli.Parse(args)
 	if err != nil {
 		return err
 	}
 
-	ctx := context.Background()
-
-	return action(ctx)
+	return action(0)
 }
 
-func (args *Args) run(ctx context.Context) error {
+func (args *Application) run(uctx int) error {
 	for i := range args.count {
 		fmt.Println(i+1, "bang against", args.wall)
 	}

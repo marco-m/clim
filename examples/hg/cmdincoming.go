@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/marco-m/clim"
@@ -38,11 +37,12 @@ type incomingCmd struct {
 	rev         []string
 }
 
-func newIncomingCLI(parentCli *clim.CLI) *clim.CLI {
-	cli := parentCli.AddCLI("incoming",
-		"show new changesets found in source")
-
+func newIncomingCLI(parentCli *clim.CLI[user]) *clim.CLI[user] {
 	incomingCmd := incomingCmd{}
+
+	cli := parentCli.AddCLI("incoming",
+		"show new changesets found in source",
+		incomingCmd.Run)
 
 	cli.AddFlag(&clim.Flag{Value: clim.Bool(&incomingCmd.force, false),
 		Short: "f", Long: "force",
@@ -57,12 +57,10 @@ func newIncomingCLI(parentCli *clim.CLI) *clim.CLI {
 		Short: "r", Long: "rev", Label: "REV[,REV,..]",
 		Desc: "remote changeset(s) intended to be added"})
 
-	cli.SetAction(incomingCmd.Run)
-
 	return cli
 }
 
-func (cmd *incomingCmd) Run(ctx context.Context) error {
+func (cmd *incomingCmd) Run(uctx user) error {
 	fmt.Println("hello from IncomingCmd Run")
 	fmt.Printf("%#+v\n", cmd)
 	return nil

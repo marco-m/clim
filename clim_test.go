@@ -16,7 +16,7 @@ func TestSimpleHelp(t *testing.T) {
 		dryRun bool
 	}
 	var args Args
-	cli := clim.New("bang", "bangs head against wall")
+	cli := clim.New[any]("bang", "bangs head against wall", nil)
 
 	cli.AddFlag(&clim.Flag{
 		Value: clim.Int(&args.count, 3),
@@ -60,7 +60,7 @@ Options:
 
 func TestDestinationsMustBeUnique(t *testing.T) {
 	var count int
-	cli := clim.New("banana", "I am tasty")
+	cli := clim.New[any]("banana", "I am tasty", nil)
 
 	// 1st reference to variable 'count': OK.
 	cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 3), Long: "count"})
@@ -74,7 +74,7 @@ func TestDestinationsMustBeUnique(t *testing.T) {
 func TestLongFlagsMustBeUnique(t *testing.T) {
 	var count int
 	var extra int
-	cli := clim.New("banana", "I am tasty")
+	cli := clim.New[any]("banana", "I am tasty", nil)
 
 	// 1st long flag '--count'
 	cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 3), Long: "count"})
@@ -88,7 +88,7 @@ func TestLongFlagsMustBeUnique(t *testing.T) {
 func TestShortFlagsMustBeUnique(t *testing.T) {
 	var count int
 	var extra int
-	cli := clim.New("banana", "I am tasty")
+	cli := clim.New[any]("banana", "I am tasty", nil)
 
 	// 1st short flag '-c'
 	cli.AddFlag(&clim.Flag{
@@ -105,7 +105,7 @@ func TestShortFlagsMustBeUnique(t *testing.T) {
 func TestCannotOverrideHelpFlag(t *testing.T) {
 	var count int
 	var extra int
-	cli := clim.New("banana", "I am tasty")
+	cli := clim.New[any]("banana", "I am tasty", nil)
 
 	// Attempt to override '--help' panics
 	// FIXME In the future I would like to allow to ovverride --help
@@ -124,7 +124,7 @@ func TestCannotOverrideHelpFlag(t *testing.T) {
 func TestLongFlagIsMandatory(t *testing.T) {
 	var count int
 	var extra int
-	cli := clim.New("banana", "I am tasty")
+	cli := clim.New[any]("banana", "I am tasty", nil)
 
 	// Empty short flag is OK
 	cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 3), Long: "count"})
@@ -144,7 +144,7 @@ func TestFlagsNamingConstraints(t *testing.T) {
 	}
 
 	test := func(t *testing.T, tc testCase) {
-		cli := clim.New("banana", "I am tasty")
+		cli := clim.New[any]("banana", "I am tasty", nil)
 		var count int
 
 		qt.Assert(t, qt.PanicMatches(func() {
@@ -186,14 +186,14 @@ func TestFlagsNamingConstraints(t *testing.T) {
 func TestNameCannotBeEmpty(t *testing.T) {
 	qt.Assert(t, qt.PanicMatches(
 		func() {
-			clim.New("", "I am tasty")
+			clim.New[any]("", "I am tasty", nil)
 		}, `clim\.New: name cannot be empty`,
 	))
 }
 
 func TestParseOnePairSuccess(t *testing.T) {
 	var count int
-	cli := clim.New("basket", "juicy fruits")
+	cli := clim.New[any]("basket", "juicy fruits", nil)
 	cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 3), Long: "count"})
 
 	_, err := cli.Parse([]string{"--count", "42"})
@@ -204,7 +204,7 @@ func TestParseOnePairSuccess(t *testing.T) {
 
 func TestParseOnePairUnrecognized(t *testing.T) {
 	var count int
-	cli := clim.New("basket", "juicy fruits")
+	cli := clim.New[any]("basket", "juicy fruits", nil)
 	cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 3), Long: "count"})
 
 	_, err := cli.Parse([]string{"--fruit", "42"})
@@ -221,7 +221,7 @@ func TestArgs(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var count int
-		cli := clim.New("basket", "juicy fruits")
+		cli := clim.New[any]("basket", "juicy fruits", nil)
 		cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 3), Long: "count"})
 
 		_, err := cli.Parse(tc.args)
@@ -261,7 +261,7 @@ func TestArgs(t *testing.T) {
 func TestRequiredHelp(t *testing.T) {
 	var count int
 	var level int
-	cli := clim.New("bang", "bang head")
+	cli := clim.New[any]("bang", "bang head", nil)
 	cli.AddFlag(&clim.Flag{
 		// Default value with Required, will be ignored also in the help.
 		Value:    clim.Int(&count, 3),
@@ -296,7 +296,7 @@ Options:
 func TestRequireSuccess(t *testing.T) {
 	var count int
 	var level int
-	cli := clim.New("bang", "bang head")
+	cli := clim.New[any]("bang", "bang head", nil)
 	cli.AddFlag(&clim.Flag{
 		// Default value with Required, will be ignored also in the help.
 		Value:    clim.Int(&count, 3),
@@ -320,7 +320,7 @@ func TestRequiredFailure(t *testing.T) {
 	var count int
 	var level int
 	var foo int
-	cli := clim.New("bang", "bang head")
+	cli := clim.New[any]("bang", "bang head", nil)
 	cli.AddFlag(&clim.Flag{
 		Value:    clim.Int(&count, 3),
 		Long:     "count",
@@ -347,14 +347,14 @@ func TestSubCommandRequiredFailure(t *testing.T) {
 	var count int
 	var foo int
 
-	cli := clim.New("bang", "bang head")
+	cli := clim.New[any]("bang", "bang head", nil)
 	cli.AddFlag(&clim.Flag{
 		Value:    clim.Int(&count, 0),
 		Long:     "count",
 		Required: true,
 	})
 
-	subCli := cli.AddCLI("sub", "I am a subcommand")
+	subCli := cli.AddCLI("sub", "I am a subcommand", nil)
 	subCli.AddFlag(&clim.Flag{
 		Value:    clim.Int(&foo, 0),
 		Long:     "foo",

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/marco-m/clim"
@@ -38,11 +37,12 @@ type outgoingCmd struct {
 	bookmarks   bool
 }
 
-func newOutgoingCLI(parentCli *clim.CLI) *clim.CLI {
-	cli := parentCli.AddCLI("outgoing",
-		"show changesets not found in the destination")
-
+func newOutgoingCLI(parentCli *clim.CLI[user]) *clim.CLI[user] {
 	outgoingCmd := outgoingCmd{}
+
+	cli := parentCli.AddCLI("outgoing",
+		"show changesets not found in the destination",
+		outgoingCmd.Run)
 
 	cli.AddFlag(&clim.Flag{Value: clim.Bool(&outgoingCmd.force, false),
 		Short: "f", Long: "force",
@@ -55,12 +55,10 @@ func newOutgoingCLI(parentCli *clim.CLI) *clim.CLI {
 	cli.AddFlag(&clim.Flag{Value: clim.Bool(&outgoingCmd.bookmarks, false),
 		Short: "B", Long: "bookmarks", Desc: "compare bookmarks"})
 
-	cli.SetAction(outgoingCmd.Run)
-
 	return cli
 }
 
-func (cmd *outgoingCmd) Run(ctx context.Context) error {
+func (cmd *outgoingCmd) Run(uctx user) error {
 	fmt.Println("hello from OutgoingCmd Run")
 	fmt.Printf("%#+v\n", cmd)
 	return nil
