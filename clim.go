@@ -392,7 +392,7 @@ func (cli *CLI[T]) usageOptions() string {
 
 func (cli *CLI[T]) run(uctx T) error {
 	if cli.action == nil {
-		return ParseError("command %q: no action registered", cli.name)
+		return ParseError("command '%s': no action registered", cli.name)
 	}
 	return cli.action(uctx)
 }
