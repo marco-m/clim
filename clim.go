@@ -10,6 +10,9 @@ import (
 	"golang.org/x/exp/maps"
 )
 
+// ActionFn is the function type of the "action" returned by a parser.
+type ActionFn[T any] func(uctx T) error
+
 var (
 	// User requested help.
 	ErrHelp = errors.New("")
@@ -43,7 +46,7 @@ type CLI[T any] struct {
 	//
 	parent  string
 	subCLIs []*CLI[T]
-	action  func(uctx T) error
+	action  ActionFn[T]
 	groups  []cliGroup[T]
 }
 
@@ -55,7 +58,7 @@ type cliGroup[T any] struct {
 // New creates the top-level [CLI], representing the program itself,
 // and sets action, to be returned by a successful parse.
 // See [CLI.AddCLI] to add a sub CLI (subcommand).
-func New[T any](name string, desc string, action func(uctx T) error) *CLI[T] {
+func New[T any](name string, desc string, action ActionFn[T]) *CLI[T] {
 	if name == "" {
 		panic("clim.New: name cannot be empty")
 	}
@@ -143,7 +146,7 @@ func (cli *CLI[T]) AddFlag(flag *Flag) {
 
 // AddCLI adds a sub CLI, that is, a subcommand, with name and desc,
 // and sets action, to be returned by a successful parse.
-func (cli *CLI[T]) AddCLI(name string, desc string, action func(uctx T) error) *CLI[T] {
+func (cli *CLI[T]) AddCLI(name string, desc string, action ActionFn[T]) *CLI[T] {
 	subCLI := New[T](name, desc, action)
 	subCLI.parent = cli.name
 	cli.subCLIs = append(cli.subCLIs, subCLI)
@@ -165,7 +168,7 @@ func (cmd *CLI[T]) Args() []string {
 
 // Parse recursively processes args, calling the needed subCLI, and returns
 // the associated action.
-func (cli *CLI[T]) Parse(args []string) (func(uctx T) error, error) {
+func (cli *CLI[T]) Parse(args []string) (ActionFn[T], error) {
 	index := 0
 	for {
 		long, offset, err := cli.parseOne(args[index:])
