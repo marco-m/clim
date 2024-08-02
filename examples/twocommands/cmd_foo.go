@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/marco-m/clim"
@@ -23,7 +24,7 @@ func newFooCLI(parentCli *clim.CLI[App]) *clim.CLI[App] {
 	return cli
 }
 
-func (cmd *fooCmd) Run(app App) error {
+func (cmd *fooCmd) Run(ctx context.Context, app App) error {
 	fmt.Println("hello from FooCmd Run")
 	fmt.Printf("%#+v\n", cmd)
 	return nil

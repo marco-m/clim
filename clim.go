@@ -1,6 +1,7 @@
 package clim
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"regexp"
@@ -11,7 +12,7 @@ import (
 )
 
 // ActionFn is the function type of the "action" returned by a parser.
-type ActionFn[T any] func(uctx T) error
+type ActionFn[T any] func(ctx context.Context, uctx T) error
 
 var (
 	// User requested help.
@@ -393,9 +394,9 @@ func (cli *CLI[T]) usageOptions() string {
 	return bld.String()
 }
 
-func (cli *CLI[T]) run(uctx T) error {
+func (cli *CLI[T]) run(ctx context.Context, uctx T) error {
 	if cli.action == nil {
 		return ParseError("command '%s': no action registered", cli.name)
 	}
-	return cli.action(uctx)
+	return cli.action(ctx, uctx)
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -47,5 +48,5 @@ func mainErr(args []string) error {
 		return err
 	}
 
-	return action(app)
+	return action(context.Background(), app)
 }
