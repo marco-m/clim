@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/marco-m/clim"
@@ -59,7 +58,7 @@ func newOutgoingCLI(parentCli *clim.CLI[user]) *clim.CLI[user] {
 	return cli
 }
 
-func (cmd *outgoingCmd) Run(ctx context.Context, uctx user) error {
+func (cmd *outgoingCmd) Run(uctx user) error {
 	fmt.Println("hello from OutgoingCmd Run")
 	fmt.Printf("%#+v\n", cmd)
 	return nil

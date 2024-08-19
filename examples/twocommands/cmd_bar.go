@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/marco-m/clim"
@@ -24,7 +23,7 @@ func newBarCLI(parentCli *clim.CLI[App]) *clim.CLI[App] {
 	return cli
 }
 
-func (cmd *barCmd) Run(ctx context.Context, app App) error {
+func (cmd *barCmd) Run(app App) error {
 	fmt.Println("hello from BarCmd Run")
 	fmt.Printf("%#+v\n", cmd)
 	return nil

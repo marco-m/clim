@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -54,10 +53,10 @@ func mainErr(args []string) error {
 		return err
 	}
 
-	return action(context.Background(), 0)
+	return action(0)
 }
 
-func (args *Application) run(ctx context.Context, uctx int) error {
+func (args *Application) run(uctx int) error {
 	for i := range args.count {
 		fmt.Println(i+1, "bang against", args.wall)
 	}

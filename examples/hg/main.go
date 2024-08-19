@@ -4,7 +4,6 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -51,7 +50,6 @@ func mainErr(args []string) error {
 		return err
 	}
 
-	ctx := context.Background()
 	uctx := user{}
-	return action(ctx, uctx)
+	return action(uctx)
 }
