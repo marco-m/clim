@@ -38,15 +38,37 @@ func mainErr(args []string) error {
 	var app Application
 	cli := clim.New("bang", "bangs head against wall", app.run)
 
-	cli.AddFlag(&clim.Flag{Value: clim.Int(&app.count, 3),
-		Short: "c", Long: "count", Label: "N", Desc: "How many times"})
-	cli.AddFlag(&clim.Flag{Value: clim.String(&app.wall, "cardboard"),
-		Long: "wall", Desc: "Type of wall"})
-	cli.AddFlag(&clim.Flag{Value: clim.Bool(&app.dryRun, false),
-		Long: "dry-run", Desc: "Enable dry-run"})
-	cli.AddFlag(&clim.Flag{Value: clim.IntSlice(&app.sequence, []int{1, 2, 3}),
+	// Optional
+	cli.SetDescription(`
+Long description.
+Could be multi-line.`)
+
+	// Optional
+	cli.SetExamples(`
+One or more examples.
+
+Could be multi-line.`)
+
+	// Optional
+	cli.SetFooter("For more information, see https://www.example.org/")
+
+	cli.AddFlag(&clim.Flag{
+		Value: clim.Int(&app.count, 3),
+		Short: "c", Long: "count", Label: "N", Desc: "How many times",
+	})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.String(&app.wall, "cardboard"),
+		Long:  "wall", Desc: "Type of wall",
+	})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.Bool(&app.dryRun, false),
+		Long:  "dry-run", Desc: "Enable dry-run",
+	})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.IntSlice(&app.sequence, []int{1, 2, 3}),
 		Short: "s", Long: "sequence", Label: "N[,N,..]",
-		Desc: "bang sequence"})
+		Desc: "bang sequence",
+	})
 
 	action, err := cli.Parse(args)
 	if err != nil {

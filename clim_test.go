@@ -1,7 +1,6 @@
 package clim_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/go-quicktest/qt"
@@ -38,8 +37,7 @@ func TestSimpleHelp(t *testing.T) {
 		Desc:  "Enable dry-run",
 	})
 
-	want := strings.TrimSpace(`
-bang -- bangs head against wall
+	want := `bang -- bangs head against wall
 
 Usage: bang [options]
 
@@ -50,7 +48,7 @@ Options:
  --wall WALL      Type of wall (default: cardboard)
 
  -h, --help       Print this help and exit
-`)
+`
 
 	_, err := cli.Parse([]string{"-h"})
 
@@ -93,12 +91,15 @@ func TestShortFlagsMustBeUnique(t *testing.T) {
 	// 1st short flag '-c'
 	cli.AddFlag(&clim.Flag{
 		Value: clim.Int(&count, 3),
-		Short: "c", Long: "count"})
+		Short: "c", Long: "count",
+	})
 
 	// 2nd short flag '-c' panics
 	qt.Assert(t, qt.PanicMatches(func() {
-		cli.AddFlag(&clim.Flag{Value: clim.Int(&extra, 0),
-			Short: "c", Long: "extra"})
+		cli.AddFlag(&clim.Flag{
+			Value: clim.Int(&extra, 0),
+			Short: "c", Long: "extra",
+		})
 	}, `banana: short flag name "c" already defined`))
 }
 
@@ -116,8 +117,10 @@ func TestCannotOverrideHelpFlag(t *testing.T) {
 
 	// Attempt to override '-h' panics
 	qt.Assert(t, qt.PanicMatches(func() {
-		cli.AddFlag(&clim.Flag{Value: clim.Int(&extra, 0),
-			Short: "h", Long: "extra"})
+		cli.AddFlag(&clim.Flag{
+			Value: clim.Int(&extra, 0),
+			Short: "h", Long: "extra",
+		})
 	}, `cannot override short flag name "h"`))
 }
 
@@ -148,8 +151,10 @@ func TestFlagsNamingConstraints(t *testing.T) {
 		var count int
 
 		qt.Assert(t, qt.PanicMatches(func() {
-			cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 3),
-				Short: tc.short, Long: tc.long})
+			cli.AddFlag(&clim.Flag{
+				Value: clim.Int(&count, 3),
+				Short: tc.short, Long: tc.long,
+			})
 		}, tc.want))
 	}
 
@@ -274,8 +279,7 @@ func TestRequiredHelp(t *testing.T) {
 		Long:  "level",
 	})
 
-	want := strings.TrimSpace(`
-bang -- bang head
+	want := `bang -- bang head
 
 Usage: bang [options]
 
@@ -285,7 +289,7 @@ Options:
  --level LEVEL     (default: 5)
 
  -h, --help       Print this help and exit
-`)
+`
 
 	_, err := cli.Parse([]string{"-h"})
 

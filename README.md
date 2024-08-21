@@ -55,6 +55,35 @@ Options:
  -h, --help                Print this help and exit
 ```
 
+It also supports optional multi-line description, multi-line examples and multi-line footer:
+
+```console
+$ go run ./examples/bang -h
+bang -- bangs head against wall
+
+ Long description.
+ Could be multi-line.
+
+Usage: bang [options]
+
+Examples:
+
+ One or more examples.
+
+ Could be multi-line.
+
+Options:
+
+ -c, --count N              How many times (default: 3)
+ --dry-run                  Enable dry-run (default: false)
+ -s, --sequence N[,N,..]    bang sequence (default: 1,2,3)
+ --wall WALL                Type of wall (default: cardboard)
+
+ -h, --help                 Print this help and exit
+
+ For more information, see https://www.example.org/
+```
+
 ## Examples
 
 See directory [examples](examples/).

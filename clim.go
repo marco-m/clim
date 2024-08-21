@@ -38,7 +38,10 @@ func helpError(format string, a ...any) error {
 // subcommands, created with [CLI.AddCLI]. A [Flag] is added with [CLI.AddFlag].
 type CLI[T any] struct {
 	name        string
-	desc        string
+	oneline     string
+	description string
+	examples    string
+	footer      string
 	long2flag   map[string]*Flag
 	short2long  map[string]string
 	longSeen    map[string]struct{} // Options seen on the command-line
@@ -57,19 +60,32 @@ type cliGroup[T any] struct {
 
 // New creates the top-level [CLI], representing the program itself,
 // and sets action, to be returned by a successful parse.
+// 'oneline' is the one line description.
 // See [CLI.AddCLI] to add a sub CLI (subcommand).
-func New[T any](name string, desc string, action ActionFn[T]) *CLI[T] {
+func New[T any](name string, oneline string, action ActionFn[T]) *CLI[T] {
 	if name == "" {
 		panic("clim.New: name cannot be empty")
 	}
 	return &CLI[T]{
 		name:       name,
-		desc:       desc,
+		oneline:    oneline,
 		action:     action,
 		long2flag:  make(map[string]*Flag),
 		short2long: make(map[string]string),
 		longSeen:   map[string]struct{}{},
 	}
+}
+
+func (cli *CLI[T]) SetDescription(desc string) {
+	cli.description = strings.TrimSpace(desc)
+}
+
+func (cli *CLI[T]) SetExamples(examples string) {
+	cli.examples = strings.TrimSpace(examples)
+}
+
+func (cli *CLI[T]) SetFooter(footer string) {
+	cli.footer = strings.TrimSpace(footer)
 }
 
 // AddFlag adds a [Flag] to cli.
@@ -311,12 +327,29 @@ func (cli *CLI[T]) usage() error {
 	if cli.parent != "" {
 		parentAndMe = cli.parent + " " + cli.name
 	}
-	fmt.Fprintf(&bld, "%s -- %s\n\n", parentAndMe, cli.desc)
+	fmt.Fprintf(&bld, "%s -- %s\n\n", parentAndMe, cli.oneline)
+
+	if cli.description != "" {
+		for _, line := range strings.Split(cli.description, "\n") {
+			fmt.Fprintf(&bld, " %s\n", line)
+		}
+		fmt.Fprintln(&bld)
+	}
+
 	fmt.Fprintf(&bld, "Usage: %s ", parentAndMe)
 	if len(cli.subCLIs) > 0 {
 		fmt.Fprintf(&bld, "<command> ")
 	}
 	fmt.Fprintf(&bld, "[options]\n\n")
+
+	if cli.examples != "" {
+		fmt.Fprintf(&bld, "Examples:\n\n")
+		for _, line := range strings.Split(cli.examples, "\n") {
+			fmt.Fprintf(&bld, " %s\n", line)
+		}
+		fmt.Fprintln(&bld)
+	}
+
 	if len(cli.groups) > 0 {
 		fmt.Fprintf(&bld, "available commands:\n\n")
 	} else if len(cli.subCLIs) > 0 {
@@ -331,13 +364,13 @@ func (cli *CLI[T]) usage() error {
 		for _, group := range cli.groups {
 			fmt.Fprintf(&bld, "%s:\n\n", group.name)
 			for _, cmd := range group.clis {
-				fmt.Fprintf(&bld, " %-*s%s\n", width, cmd.name, cmd.desc)
+				fmt.Fprintf(&bld, " %-*s%s\n", width, cmd.name, cmd.oneline)
 			}
 			fmt.Fprintln(&bld)
 		}
 	} else if len(cli.subCLIs) > 0 {
 		for _, cmd := range cli.subCLIs {
-			fmt.Fprintf(&bld, " %-*s%s\n", width, cmd.name, cmd.desc)
+			fmt.Fprintf(&bld, " %-*s%s\n", width, cmd.name, cmd.oneline)
 		}
 		fmt.Fprintln(&bld)
 	}
@@ -389,7 +422,15 @@ func (cli *CLI[T]) usageOptions() string {
 	}
 
 	fmt.Fprintf(&bld, "%-*s%s", maxColWidth+gutter,
-		" -h, --help", "Print this help and exit")
+		" -h, --help", "Print this help and exit\n")
+
+	if cli.footer != "" {
+		fmt.Fprintln(&bld)
+		for _, line := range strings.Split(cli.footer, "\n") {
+			fmt.Fprintf(&bld, " %s\n", line)
+		}
+	}
+
 	return bld.String()
 }
 
