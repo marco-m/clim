@@ -88,6 +88,19 @@ func (cli *CLI[T]) SetFooter(footer string) {
 	cli.footer = strings.TrimSpace(footer)
 }
 
+// A Flag represents the state of a flag.
+// See also [CLI.AddFlag].
+type Flag struct {
+	Value    Value  // Final value, once parsed, mandatory.
+	Short    string // Short flag, optional.
+	Long     string // Long flag, mandatory.
+	Label    string // Placeholder in usage message, optional.
+	Help     string // Help text, optional.
+	Required bool   // Optional, default false.
+	//
+	defValue string // Default value, for usage message. Taken from Value.
+}
+
 // AddFlag adds a [Flag] to cli.
 // The type and value of the flag are represented by the field [Flag.Value],
 // which holds either one of the implementation of [Value] from the clim package
