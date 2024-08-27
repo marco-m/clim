@@ -19,8 +19,10 @@ func TestParseIntSuccess(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var count int
 		cli := clim.New[any]("bang", "bangs head against wall", nil)
-		cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 3),
-			Short: "c", Long: "count"})
+		cli.AddFlag(&clim.Flag{
+			Value: clim.Int(&count, 3),
+			Short: "c", Long: "count",
+		})
 
 		_, err := cli.Parse(tc.args)
 		qt.Assert(t, qt.IsNil(err))
@@ -65,8 +67,10 @@ func TestParseIntFailure(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var count int
 		cli := clim.New[any]("bang", "bangs head against wall", nil)
-		cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 3),
-			Short: "c", Long: "count"})
+		cli.AddFlag(&clim.Flag{
+			Value: clim.Int(&count, 3),
+			Short: "c", Long: "count",
+		})
 
 		_, err := cli.Parse(tc.args)
 		qt.Assert(t, qt.Equals(err.Error(), tc.wantErr))
@@ -95,8 +99,10 @@ func TestParseString(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var fruit string
 		cli := clim.New[any]("bang", "bangs head against wall", nil)
-		cli.AddFlag(&clim.Flag{Value: clim.String(&fruit, "banana"),
-			Short: "f", Long: "fruit"})
+		cli.AddFlag(&clim.Flag{
+			Value: clim.String(&fruit, "banana"),
+			Short: "f", Long: "fruit",
+		})
 
 		_, err := cli.Parse(tc.args)
 		qt.Assert(t, qt.IsNil(err))
@@ -141,8 +147,10 @@ func TestParseBoolSuccess(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var sliced bool
 		cli := clim.New[any]("bang", "bangs head against wall", nil)
-		cli.AddFlag(&clim.Flag{Value: clim.Bool(&sliced, false),
-			Short: "s", Long: "sliced"})
+		cli.AddFlag(&clim.Flag{
+			Value: clim.Bool(&sliced, false),
+			Short: "s", Long: "sliced",
+		})
 
 		_, err := cli.Parse(tc.args)
 		qt.Assert(t, qt.IsNil(err))
@@ -192,8 +200,10 @@ func TestParseBoolFailure(t *testing.T) {
 	test := func(t *testing.T, tc testCase) {
 		var sliced bool
 		cli := clim.New[any]("bang", "bangs head against wall", nil)
-		cli.AddFlag(&clim.Flag{Value: clim.Bool(&sliced, false),
-			Short: "s", Long: "sliced"})
+		cli.AddFlag(&clim.Flag{
+			Value: clim.Bool(&sliced, false),
+			Short: "s", Long: "sliced",
+		})
 
 		_, err := cli.Parse(tc.args)
 		qt.Assert(t, qt.Equals(err.Error(), tc.wantErr))
@@ -215,8 +225,10 @@ func TestParseBoolFailure(t *testing.T) {
 func TestParseDurationSuccess(t *testing.T) {
 	var timeout time.Duration
 	cli := clim.New[any]("bang", "bangs head against wall", nil)
-	cli.AddFlag(&clim.Flag{Value: clim.Duration(&timeout, 0),
-		Long: "timeout"})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.Duration(&timeout, 0),
+		Long:  "timeout",
+	})
 
 	_, err := cli.Parse([]string{"--timeout=32m4ms"})
 	qt.Assert(t, qt.IsNil(err))
@@ -226,8 +238,10 @@ func TestParseDurationSuccess(t *testing.T) {
 func TestParseDurationFailure(t *testing.T) {
 	var timeout time.Duration
 	cli := clim.New[any]("bang", "bangs head against wall", nil)
-	cli.AddFlag(&clim.Flag{Value: clim.Duration(&timeout, 0),
-		Long: "timeout"})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.Duration(&timeout, 0),
+		Long:  "timeout",
+	})
 
 	_, err := cli.Parse([]string{"--timeout=78"})
 	qt.Assert(t, qt.ErrorMatches(err,
