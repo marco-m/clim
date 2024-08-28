@@ -17,8 +17,10 @@ func newBarCLI(parentCli *clim.CLI[App]) *clim.CLI[App] {
 		"simple bars all night",
 		barCmd.Run)
 
-	cli.AddFlag(&clim.Flag{Value: clim.Bool(&barCmd.hard, false),
-		Long: "hard", Desc: "make harder bars"})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.Bool(&barCmd.hard, false),
+		Long:  "hard", Help: "make harder bars",
+	})
 
 	return cli
 }

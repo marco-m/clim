@@ -35,8 +35,9 @@ func mainErr(args []string) error {
 	app := App{}
 	cli := clim.New[App]("twocommands", "two simple commands, no groups", nil)
 
-	cli.AddFlag(&clim.Flag{Value: clim.Bool(&app.verbose, false),
-		Long: "verbose", Desc: "Be more verbose",
+	cli.AddFlag(&clim.Flag{
+		Value: clim.Bool(&app.verbose, false),
+		Long:  "verbose", Help: "Be more verbose",
 	})
 
 	newFooCLI(cli)

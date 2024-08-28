@@ -34,11 +34,15 @@ func newInitCLI(parentCli *clim.CLI[user]) *clim.CLI[user] {
 		"create a new repository in the given directory",
 		initCmd.Run)
 
-	cli.AddFlag(&clim.Flag{Value: clim.String(&initCmd.remoteCmd, ""),
-		Long: "remotecmd", Label: "CMD",
-		Desc: "specify hg command to run on the remote side"})
-	cli.AddFlag(&clim.Flag{Value: clim.Bool(&initCmd.mq, false),
-		Long: "mq", Desc: "operate on patch repository"})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.String(&initCmd.remoteCmd, ""),
+		Long:  "remotecmd", Label: "CMD",
+		Help: "specify hg command to run on the remote side",
+	})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.Bool(&initCmd.mq, false),
+		Long:  "mq", Help: "operate on patch repository",
+	})
 
 	return cli
 }

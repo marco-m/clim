@@ -54,20 +54,20 @@ Could be multi-line.`)
 
 	cli.AddFlag(&clim.Flag{
 		Value: clim.Int(&app.count, 3),
-		Short: "c", Long: "count", Label: "N", Desc: "How many times",
+		Short: "c", Long: "count", Label: "N", Help: "How many times",
 	})
 	cli.AddFlag(&clim.Flag{
 		Value: clim.String(&app.wall, "cardboard"),
-		Long:  "wall", Desc: "Type of wall",
+		Long:  "wall", Help: "Type of wall",
 	})
 	cli.AddFlag(&clim.Flag{
 		Value: clim.Bool(&app.dryRun, false),
-		Long:  "dry-run", Desc: "Enable dry-run",
+		Long:  "dry-run", Help: "Enable dry-run",
 	})
 	cli.AddFlag(&clim.Flag{
 		Value: clim.IntSlice(&app.sequence, []int{1, 2, 3}),
 		Short: "s", Long: "sequence", Label: "N[,N,..]",
-		Desc: "bang sequence",
+		Help: "bang sequence",
 	})
 
 	action, err := cli.Parse(args)

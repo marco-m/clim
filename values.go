@@ -44,7 +44,7 @@ type Flag struct {
 	Short    string // Short flag, optional.
 	Long     string // Long flag, mandatory.
 	Label    string // Placeholder in usage message, optional.
-	Desc     string // Description, optional.
+	Help     string // Help text, optional.
 	Required bool   // Optional, default false.
 	//
 	defValue string // Default value, for usage message. Taken from Value.

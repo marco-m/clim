@@ -160,10 +160,10 @@ func (cli *CLI[T]) AddFlag(flag *Flag) {
 	cli.long2flag[flag.Long] = flag
 }
 
-// AddCLI adds a sub CLI, that is, a subcommand, with name and desc,
+// AddCLI adds a sub CLI, that is, a subcommand, with name and oneline,
 // and sets action, to be returned by a successful parse.
-func (cli *CLI[T]) AddCLI(name string, desc string, action ActionFn[T]) *CLI[T] {
-	subCLI := New[T](name, desc, action)
+func (cli *CLI[T]) AddCLI(name string, oneline string, action ActionFn[T]) *CLI[T] {
+	subCLI := New[T](name, oneline, action)
 	subCLI.parent = cli.name
 	cli.subCLIs = append(cli.subCLIs, subCLI)
 	return subCLI
@@ -408,7 +408,7 @@ func (cli *CLI[T]) usageOptions() string {
 	fmt.Fprintf(&bld, "Options:\n\n")
 	for i, long := range longs {
 		flag := cli.long2flag[long]
-		fmt.Fprintf(&bld, "%-*s%s", maxColWidth+gutter, lines[i], flag.Desc)
+		fmt.Fprintf(&bld, "%-*s%s", maxColWidth+gutter, lines[i], flag.Help)
 		if flag.defValue != "" && !flag.Required {
 			fmt.Fprintf(&bld, " (default: %s)", flag.defValue)
 		}

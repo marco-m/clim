@@ -22,19 +22,19 @@ func TestSimpleHelp(t *testing.T) {
 		Short: "c",
 		Long:  "count",
 		Label: "N",
-		Desc:  "How many times",
+		Help:  "How many times",
 	})
 	cli.AddFlag(&clim.Flag{
 		Value: clim.String(&args.wall, "cardboard"),
 		// Short is optional, here we don't set it.
 		Long: "wall",
 		// Default for Label: uppercase(Long)
-		Desc: "Type of wall",
+		Help: "Type of wall",
 	})
 	cli.AddFlag(&clim.Flag{
 		Value: clim.Bool(&args.dryRun, false),
 		Long:  "dry-run",
-		Desc:  "Enable dry-run",
+		Help:  "Enable dry-run",
 	})
 
 	want := `bang -- bangs head against wall
