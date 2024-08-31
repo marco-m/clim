@@ -187,11 +187,11 @@ func (cli *CLI[T]) AddGroup(name string, clis ...*CLI[T]) {
 	cli.groups = append(cli.groups, cliGroup[T]{name, clis})
 }
 
-// Args returns the positional arguments, if any.
+// PosArgs returns the positional arguments, if any.
 // Must be called after Parse.
 // WARNING will probably disappear, replaced by support for positional
 // arguments parsing.
-func (cmd *CLI[T]) Args() []string {
+func (cmd *CLI[T]) PosArgs() []string {
 	return cmd.positionals
 }
 

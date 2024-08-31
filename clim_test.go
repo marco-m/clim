@@ -56,7 +56,7 @@ Options:
 	qt.Assert(t, qt.Equals(err.Error(), want))
 }
 
-func TestDestinationsMustBeUnique(t *testing.T) {
+func TestVariableCanBeBoundOnlyOnce(t *testing.T) {
 	var count int
 	cli := clim.New[any]("banana", "I am tasty", nil)
 
@@ -188,7 +188,7 @@ func TestFlagsNamingConstraints(t *testing.T) {
 	}
 }
 
-func TestNameCannotBeEmpty(t *testing.T) {
+func TestCliNameCannotBeEmpty(t *testing.T) {
 	qt.Assert(t, qt.PanicMatches(
 		func() {
 			clim.New[any]("", "I am tasty", nil)
@@ -196,7 +196,7 @@ func TestNameCannotBeEmpty(t *testing.T) {
 	))
 }
 
-func TestParseOnePairSuccess(t *testing.T) {
+func TestParseOneFlagPairSuccess(t *testing.T) {
 	var count int
 	cli := clim.New[any]("basket", "juicy fruits", nil)
 	cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 3), Long: "count"})
@@ -207,7 +207,7 @@ func TestParseOnePairSuccess(t *testing.T) {
 	qt.Check(t, qt.Equals(count, 42))
 }
 
-func TestParseOnePairUnrecognized(t *testing.T) {
+func TestParseOneFlagPairUnrecognized(t *testing.T) {
 	var count int
 	cli := clim.New[any]("basket", "juicy fruits", nil)
 	cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 3), Long: "count"})
@@ -217,7 +217,7 @@ func TestParseOnePairUnrecognized(t *testing.T) {
 	qt.Check(t, qt.ErrorMatches(err, `unrecognized flag "--fruit"`))
 }
 
-func TestArgs(t *testing.T) {
+func TestPosArgs(t *testing.T) {
 	type testCase struct {
 		name string
 		args []string
@@ -232,7 +232,7 @@ func TestArgs(t *testing.T) {
 		_, err := cli.Parse(tc.args)
 
 		qt.Assert(t, qt.IsNil(err))
-		qt.Assert(t, qt.DeepEquals(cli.Args(), tc.want))
+		qt.Assert(t, qt.DeepEquals(cli.PosArgs(), tc.want))
 	}
 
 	testCases := []testCase{
@@ -297,7 +297,7 @@ Options:
 	qt.Assert(t, qt.Equals(err.Error(), want))
 }
 
-func TestRequireSuccess(t *testing.T) {
+func TestRequiredIgnoresDefaultSuccess(t *testing.T) {
 	var count int
 	var level int
 	cli := clim.New[any]("bang", "bang head", nil)
