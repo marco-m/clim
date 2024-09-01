@@ -4,9 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-quicktest/qt"
-
 	"github.com/marco-m/clim"
+	"github.com/marco-m/rosina"
 )
 
 func TestParseIntSuccess(t *testing.T) {
@@ -25,8 +24,8 @@ func TestParseIntSuccess(t *testing.T) {
 		})
 
 		_, err := cli.Parse(tc.args)
-		qt.Assert(t, qt.IsNil(err))
-		qt.Assert(t, qt.Equals(count, tc.want))
+		rosina.AssertNoError(t, err)
+		rosina.AssertEqual(t, count, tc.want, "count")
 	}
 
 	testCases := []testCase{
@@ -73,7 +72,7 @@ func TestParseIntFailure(t *testing.T) {
 		})
 
 		_, err := cli.Parse(tc.args)
-		qt.Assert(t, qt.Equals(err.Error(), tc.wantErr))
+		rosina.AssertErrorTextEq(t, err, tc.wantErr)
 	}
 
 	testCases := []testCase{
@@ -105,8 +104,8 @@ func TestParseString(t *testing.T) {
 		})
 
 		_, err := cli.Parse(tc.args)
-		qt.Assert(t, qt.IsNil(err))
-		qt.Assert(t, qt.Equals(fruit, tc.want))
+		rosina.AssertNoError(t, err)
+		rosina.AssertEqual(t, fruit, tc.want, "fruit")
 	}
 
 	testCases := []testCase{
@@ -153,8 +152,8 @@ func TestParseBoolSuccess(t *testing.T) {
 		})
 
 		_, err := cli.Parse(tc.args)
-		qt.Assert(t, qt.IsNil(err))
-		qt.Assert(t, qt.Equals(sliced, tc.want))
+		rosina.AssertNoError(t, err)
+		rosina.AssertEqual(t, sliced, tc.want, "sliced")
 	}
 
 	testCases := []testCase{
@@ -206,7 +205,7 @@ func TestParseBoolFailure(t *testing.T) {
 		})
 
 		_, err := cli.Parse(tc.args)
-		qt.Assert(t, qt.Equals(err.Error(), tc.wantErr))
+		rosina.AssertErrorTextEq(t, err, tc.wantErr)
 	}
 
 	testCases := []testCase{
@@ -231,8 +230,8 @@ func TestParseDurationSuccess(t *testing.T) {
 	})
 
 	_, err := cli.Parse([]string{"--timeout=32m4ms"})
-	qt.Assert(t, qt.IsNil(err))
-	qt.Assert(t, qt.Equals(timeout, 32*time.Minute+4*time.Millisecond))
+	rosina.AssertNoError(t, err)
+	rosina.AssertEqual(t, timeout, 32*time.Minute+4*time.Millisecond, "timeout")
 }
 
 func TestParseDurationFailure(t *testing.T) {
@@ -244,6 +243,6 @@ func TestParseDurationFailure(t *testing.T) {
 	})
 
 	_, err := cli.Parse([]string{"--timeout=78"})
-	qt.Assert(t, qt.ErrorMatches(err,
-		`setting "--timeout=78": time: missing unit in duration "78"`))
+	rosina.AssertErrorTextEq(t, err,
+		`setting "--timeout=78": time: missing unit in duration "78"`)
 }

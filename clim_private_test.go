@@ -3,8 +3,8 @@ package clim
 import (
 	"testing"
 
-	"github.com/go-quicktest/qt"
 	"github.com/google/go-cmp/cmp"
+	"github.com/marco-m/rosina"
 )
 
 func TestUsage(t *testing.T) {
@@ -43,7 +43,8 @@ Options:
 
 	err := cli.usage()
 
-	qt.Assert(t, qt.ErrorIs(err, ErrHelp))
+	rosina.AssertErrorIs(t, err, ErrHelp)
+
 	if x := cmp.Diff(want, err.Error()); x != "" {
 		t.Fatal("\nwant ---\nhave +++\n", x)
 	}

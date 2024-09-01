@@ -3,9 +3,8 @@ package clim_test
 import (
 	"testing"
 
-	"github.com/go-quicktest/qt"
-
 	"github.com/marco-m/clim"
+	"github.com/marco-m/rosina"
 )
 
 func TestSimpleHelp(t *testing.T) {
@@ -52,8 +51,8 @@ Options:
 
 	_, err := cli.Parse([]string{"-h"})
 
-	qt.Assert(t, qt.ErrorIs(err, clim.ErrHelp))
-	qt.Assert(t, qt.Equals(err.Error(), want))
+	rosina.AssertErrorIs(t, err, clim.ErrHelp)
+	rosina.AssertErrorTextEq(t, err, want)
 }
 
 func TestVariableCanBeBoundOnlyOnce(t *testing.T) {
@@ -64,9 +63,10 @@ func TestVariableCanBeBoundOnlyOnce(t *testing.T) {
 	cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 3), Long: "count"})
 
 	// 2nd reference to variable 'count': panic
-	qt.Assert(t, qt.PanicMatches(func() {
+	rosina.AssertPanicTextEq(t, func() {
 		cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 0), Long: "extra"})
-	}, `long flag name "extra": variable already bound to flag "count"`))
+	},
+		`long flag name "extra": variable already bound to flag "count"`)
 }
 
 func TestLongFlagsMustBeUnique(t *testing.T) {
@@ -78,9 +78,10 @@ func TestLongFlagsMustBeUnique(t *testing.T) {
 	cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 3), Long: "count"})
 
 	// 2nd long flag '--count' panics
-	qt.Assert(t, qt.PanicMatches(func() {
+	rosina.AssertPanicTextEq(t, func() {
 		cli.AddFlag(&clim.Flag{Value: clim.Int(&extra, 0), Long: "count"})
-	}, `banana: long flag name "count" already defined`))
+	},
+		`banana: long flag name "count" already defined`)
 }
 
 func TestShortFlagsMustBeUnique(t *testing.T) {
@@ -95,12 +96,13 @@ func TestShortFlagsMustBeUnique(t *testing.T) {
 	})
 
 	// 2nd short flag '-c' panics
-	qt.Assert(t, qt.PanicMatches(func() {
+	rosina.AssertPanicTextEq(t, func() {
 		cli.AddFlag(&clim.Flag{
 			Value: clim.Int(&extra, 0),
 			Short: "c", Long: "extra",
 		})
-	}, `banana: short flag name "c" already defined`))
+	},
+		`banana: short flag name "c" already defined`)
 }
 
 func TestCannotOverrideHelpFlag(t *testing.T) {
@@ -111,17 +113,19 @@ func TestCannotOverrideHelpFlag(t *testing.T) {
 	// Attempt to override '--help' panics
 	// FIXME In the future I would like to allow to ovverride --help
 	//       to allow the program to provide more verbose information?
-	qt.Assert(t, qt.PanicMatches(func() {
+	rosina.AssertPanicTextEq(t, func() {
 		cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 0), Long: "help"})
-	}, `cannot override long flag name "help"`))
+	},
+		`cannot override long flag name "help"`)
 
 	// Attempt to override '-h' panics
-	qt.Assert(t, qt.PanicMatches(func() {
+	rosina.AssertPanicTextEq(t, func() {
 		cli.AddFlag(&clim.Flag{
 			Value: clim.Int(&extra, 0),
 			Short: "h", Long: "extra",
 		})
-	}, `cannot override short flag name "h"`))
+	},
+		`cannot override short flag name "h"`)
 }
 
 func TestLongFlagIsMandatory(t *testing.T) {
@@ -133,9 +137,10 @@ func TestLongFlagIsMandatory(t *testing.T) {
 	cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 3), Long: "count"})
 
 	// Empty long flag panics
-	qt.Assert(t, qt.PanicMatches(func() {
+	rosina.AssertPanicTextEq(t, func() {
 		cli.AddFlag(&clim.Flag{Value: clim.Int(&extra, 4), Short: "x"})
-	}, `long flag name cannot be empty`))
+	},
+		`long flag name cannot be empty`)
 }
 
 func TestFlagsNamingConstraints(t *testing.T) {
@@ -150,12 +155,13 @@ func TestFlagsNamingConstraints(t *testing.T) {
 		cli := clim.New[any]("banana", "I am tasty", nil)
 		var count int
 
-		qt.Assert(t, qt.PanicMatches(func() {
+		rosina.AssertPanicTextEq(t, func() {
 			cli.AddFlag(&clim.Flag{
 				Value: clim.Int(&count, 3),
 				Short: tc.short, Long: tc.long,
 			})
-		}, tc.want))
+		},
+			tc.want)
 	}
 
 	testCases := []testCase{
@@ -189,11 +195,10 @@ func TestFlagsNamingConstraints(t *testing.T) {
 }
 
 func TestCliNameCannotBeEmpty(t *testing.T) {
-	qt.Assert(t, qt.PanicMatches(
-		func() {
-			clim.New[any]("", "I am tasty", nil)
-		}, `clim\.New: name cannot be empty`,
-	))
+	rosina.AssertPanicTextEq(t, func() {
+		clim.New[any]("", "I am tasty", nil)
+	},
+		`clim.New: name cannot be empty`)
 }
 
 func TestParseOneFlagPairSuccess(t *testing.T) {
@@ -203,8 +208,8 @@ func TestParseOneFlagPairSuccess(t *testing.T) {
 
 	_, err := cli.Parse([]string{"--count", "42"})
 
-	qt.Check(t, qt.IsNil(err))
-	qt.Check(t, qt.Equals(count, 42))
+	rosina.AssertNoError(t, err)
+	rosina.AssertEqual(t, count, 42, "count")
 }
 
 func TestParseOneFlagPairUnrecognized(t *testing.T) {
@@ -214,7 +219,7 @@ func TestParseOneFlagPairUnrecognized(t *testing.T) {
 
 	_, err := cli.Parse([]string{"--fruit", "42"})
 
-	qt.Check(t, qt.ErrorMatches(err, `unrecognized flag "--fruit"`))
+	rosina.AssertErrorTextEq(t, err, `unrecognized flag "--fruit"`)
 }
 
 func TestPosArgs(t *testing.T) {
@@ -231,8 +236,8 @@ func TestPosArgs(t *testing.T) {
 
 		_, err := cli.Parse(tc.args)
 
-		qt.Assert(t, qt.IsNil(err))
-		qt.Assert(t, qt.DeepEquals(cli.PosArgs(), tc.want))
+		rosina.AssertNoError(t, err)
+		rosina.AssertDeepEqual(t, cli.PosArgs(), tc.want, "pos args")
 	}
 
 	testCases := []testCase{
@@ -293,8 +298,8 @@ Options:
 
 	_, err := cli.Parse([]string{"-h"})
 
-	qt.Assert(t, qt.ErrorIs(err, clim.ErrHelp))
-	qt.Assert(t, qt.Equals(err.Error(), want))
+	rosina.AssertErrorIs(t, err, clim.ErrHelp)
+	rosina.AssertErrorTextEq(t, err, want)
 }
 
 func TestRequiredIgnoresDefaultSuccess(t *testing.T) {
@@ -315,9 +320,9 @@ func TestRequiredIgnoresDefaultSuccess(t *testing.T) {
 
 	_, err := cli.Parse([]string{"--count=1"})
 
-	qt.Check(t, qt.IsNil(err))
-	qt.Check(t, qt.Equals(count, 1)) // parsed
-	qt.Check(t, qt.Equals(level, 5)) // from default value
+	rosina.AssertNoError(t, err)
+	rosina.AssertEqual(t, count, 1, "count (parsed)")
+	rosina.AssertEqual(t, level, 5, "level (default value)")
 }
 
 func TestRequiredFailure(t *testing.T) {
@@ -343,8 +348,8 @@ func TestRequiredFailure(t *testing.T) {
 
 	_, err := cli.Parse(nil)
 
-	qt.Assert(t, qt.ErrorIs(err, clim.ErrParse))
-	qt.Assert(t, qt.Equals(err.Error(), `missing required options: count, foo`))
+	rosina.AssertErrorIs(t, err, clim.ErrParse)
+	rosina.AssertErrorTextEq(t, err, `missing required options: count, foo`)
 }
 
 func TestSubCommandRequiredFailure(t *testing.T) {
@@ -368,6 +373,6 @@ func TestSubCommandRequiredFailure(t *testing.T) {
 
 	_, err := cli.Parse([]string{"--count=22", "sub"})
 
-	qt.Assert(t, qt.ErrorIs(err, clim.ErrParse))
-	qt.Assert(t, qt.Equals(err.Error(), `missing required options: foo`))
+	rosina.AssertErrorIs(t, err, clim.ErrParse)
+	rosina.AssertErrorTextEq(t, err, `missing required options: foo`)
 }
