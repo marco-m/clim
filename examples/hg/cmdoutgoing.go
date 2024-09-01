@@ -37,10 +37,10 @@ type outgoingCmd struct {
 	bookmarks   bool
 }
 
-func newOutgoingCLI(parentCli *clim.CLI[user]) *clim.CLI[user] {
+func newOutgoingCLI() *clim.CLI[user] {
 	outgoingCmd := outgoingCmd{}
 
-	cli := parentCli.AddCLI("outgoing",
+	cli := clim.New("outgoing",
 		"show changesets not found in the destination",
 		outgoingCmd.Run)
 

@@ -173,17 +173,22 @@ func (cli *CLI[T]) AddFlag(flag *Flag) {
 	cli.long2flag[flag.Long] = flag
 }
 
-// AddCLI adds a sub CLI, that is, a subcommand, with name and oneline,
-// and sets action, to be returned by a successful parse.
-func (cli *CLI[T]) AddCLI(name string, oneline string, action ActionFn[T]) *CLI[T] {
-	subCLI := New[T](name, oneline, action)
-	subCLI.parent = cli.name
-	cli.subCLIs = append(cli.subCLIs, subCLI)
-	return subCLI
+// AddCLI adds child (which must be correctly setup) to this CLI.
+func (cli *CLI[T]) AddCLI(child *CLI[T]) *CLI[T] {
+	child.parent = cli.name
+	cli.subCLIs = append(cli.subCLIs, child)
+	return child
 }
 
 // AddGroup adds the subclis to the group name.
 func (cli *CLI[T]) AddGroup(name string, clis ...*CLI[T]) {
+	for _, child := range clis {
+		if !slices.Contains(cli.subCLIs, child) {
+			msg := fmt.Sprintf("before adding %s to a group, it must be added to a parent with AddCLI",
+				child.name)
+			panic(msg)
+		}
+	}
 	cli.groups = append(cli.groups, cliGroup[T]{name, clis})
 }
 

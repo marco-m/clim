@@ -40,8 +40,8 @@ func mainErr(args []string) error {
 		Long:  "verbose", Help: "Be more verbose",
 	})
 
-	newFooCLI(cli)
-	newBarCLI(cli)
+	cli.AddCLI(newFooCLI())
+	cli.AddCLI(newBarCLI())
 
 	action, err := cli.Parse(args)
 	if err != nil {

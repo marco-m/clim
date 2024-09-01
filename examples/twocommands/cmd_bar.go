@@ -10,12 +10,10 @@ type barCmd struct {
 	hard bool
 }
 
-func newBarCLI(parentCli *clim.CLI[App]) *clim.CLI[App] {
+func newBarCLI() *clim.CLI[App] {
 	barCmd := barCmd{}
 
-	cli := parentCli.AddCLI("bar",
-		"simple bars all night",
-		barCmd.Run)
+	cli := clim.New("bar", "simple bars all night", barCmd.Run)
 
 	cli.AddFlag(&clim.Flag{
 		Value: clim.Bool(&barCmd.hard, false),

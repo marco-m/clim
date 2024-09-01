@@ -37,10 +37,10 @@ type incomingCmd struct {
 	rev         []string
 }
 
-func newIncomingCLI(parentCli *clim.CLI[user]) *clim.CLI[user] {
+func newIncomingCLI() *clim.CLI[user] {
 	incomingCmd := incomingCmd{}
 
-	cli := parentCli.AddCLI("incoming",
+	cli := clim.New("incoming",
 		"show new changesets found in source",
 		incomingCmd.Run)
 

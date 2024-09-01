@@ -358,12 +358,13 @@ func TestSubCommandRequiredFailure(t *testing.T) {
 		Required: true,
 	})
 
-	subCli := cli.AddCLI("sub", "I am a subcommand", nil)
+	subCli := clim.New[any]("sub", "I am a subcommand", nil)
 	subCli.AddFlag(&clim.Flag{
 		Value:    clim.Int(&foo, 0),
 		Long:     "foo",
 		Required: true,
 	})
+	cli.AddCLI(subCli)
 
 	_, err := cli.Parse([]string{"--count=22", "sub"})
 

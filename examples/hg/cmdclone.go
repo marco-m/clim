@@ -11,10 +11,10 @@ type cloneCmd struct {
 	updateRev string
 }
 
-func newCloneCLI(parentCli *clim.CLI[user]) *clim.CLI[user] {
+func newCloneCLI() *clim.CLI[user] {
 	cloneCmd := cloneCmd{}
 
-	cli := parentCli.AddCLI("clone",
+	cli := clim.New("clone",
 		"make a copy of an existing repository",
 		cloneCmd.Run)
 

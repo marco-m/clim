@@ -27,10 +27,10 @@ type initCmd struct {
 	mq        bool
 }
 
-func newInitCLI(parentCli *clim.CLI[user]) *clim.CLI[user] {
+func newInitCLI() *clim.CLI[user] {
 	initCmd := initCmd{}
 
-	cli := parentCli.AddCLI("init",
+	cli := clim.New("init",
 		"create a new repository in the given directory",
 		initCmd.Run)
 
