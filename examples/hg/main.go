@@ -36,14 +36,14 @@ func mainErr(args []string) error {
 	rootCLI := clim.New[user]("hg", "Mercurial Distributed SCM", nil)
 
 	//
-	cloneCLI := newCloneCLI(rootCLI)
-	initCLI := newInitCLI(rootCLI)
-	rootCLI.AddGroup("Repository creation", cloneCLI, initCLI)
+	rootCLI.AddGroup("Repository creation",
+		rootCLI.AddCLI(newCloneCLI()),
+		rootCLI.AddCLI(newInitCLI()))
 
 	//
-	incomingCLI := newIncomingCLI(rootCLI)
-	outgoingCLI := newOutgoingCLI(rootCLI)
-	rootCLI.AddGroup("Remote repository management", incomingCLI, outgoingCLI)
+	rootCLI.AddGroup("Remote repository management",
+		rootCLI.AddCLI(newIncomingCLI()),
+		rootCLI.AddCLI(newOutgoingCLI()))
 
 	action, err := rootCLI.Parse(args)
 	if err != nil {

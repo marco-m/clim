@@ -37,25 +37,33 @@ type incomingCmd struct {
 	rev         []string
 }
 
-func newIncomingCLI(parentCli *clim.CLI[user]) *clim.CLI[user] {
+func newIncomingCLI() *clim.CLI[user] {
 	incomingCmd := incomingCmd{}
 
-	cli := parentCli.AddCLI("incoming",
+	cli := clim.New("incoming",
 		"show new changesets found in source",
 		incomingCmd.Run)
 
-	cli.AddFlag(&clim.Flag{Value: clim.Bool(&incomingCmd.force, false),
+	cli.AddFlag(&clim.Flag{
+		Value: clim.Bool(&incomingCmd.force, false),
 		Short: "f", Long: "force",
-		Desc: "run even if remote repository is unrelated"})
-	cli.AddFlag(&clim.Flag{Value: clim.Bool(&incomingCmd.newestFirst, false),
+		Help: "run even if remote repository is unrelated",
+	})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.Bool(&incomingCmd.newestFirst, false),
 		Short: "n", Long: "newest-first",
-		Desc: "show newest record first"})
-	cli.AddFlag(&clim.Flag{Value: clim.String(&incomingCmd.bundle, ""),
-		Long: "bundle", Label: "FILE",
-		Desc: "file to store the bundles into"})
-	cli.AddFlag(&clim.Flag{Value: clim.StringSlice(&incomingCmd.rev, nil),
+		Help: "show newest record first",
+	})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.String(&incomingCmd.bundle, ""),
+		Long:  "bundle", Label: "FILE",
+		Help: "file to store the bundles into",
+	})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.StringSlice(&incomingCmd.rev, nil),
 		Short: "r", Long: "rev", Label: "REV[,REV,..]",
-		Desc: "remote changeset(s) intended to be added"})
+		Help: "remote changeset(s) intended to be added",
+	})
 
 	return cli
 }

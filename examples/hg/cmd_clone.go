@@ -11,19 +11,23 @@ type cloneCmd struct {
 	updateRev string
 }
 
-func newCloneCLI(parentCli *clim.CLI[user]) *clim.CLI[user] {
+func newCloneCLI() *clim.CLI[user] {
 	cloneCmd := cloneCmd{}
 
-	cli := parentCli.AddCLI("clone",
+	cli := clim.New("clone",
 		"make a copy of an existing repository",
 		cloneCmd.Run)
 
-	cli.AddFlag(&clim.Flag{Value: clim.Bool(&cloneCmd.noUpdate, false),
+	cli.AddFlag(&clim.Flag{
+		Value: clim.Bool(&cloneCmd.noUpdate, false),
 		Short: "U", Long: "noupdate",
-		Desc: "the clone will include an empty working directory (only a repository)"})
-	cli.AddFlag(&clim.Flag{Value: clim.String(&cloneCmd.updateRev, ""),
+		Help: "the clone will include an empty working directory (only a repository)",
+	})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.String(&cloneCmd.updateRev, ""),
 		Short: "u", Long: "updaterev", Label: "REV",
-		Desc: "revision, tag, or branch to check out"})
+		Help: "revision, tag, or branch to check out",
+	})
 
 	return cli
 }

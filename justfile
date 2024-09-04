@@ -4,6 +4,15 @@
 @_default:
     just --list
 
+bang:
+    go build -o ./bin/bang ./examples/bang
+
+twocommands:
+    go build -o ./bin/twocommands ./examples/twocommands
+
+hg:
+    go build -o ./bin/hg ./examples/hg
+
 build:
     go build ./...
 

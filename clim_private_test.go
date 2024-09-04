@@ -3,8 +3,8 @@ package clim
 import (
 	"testing"
 
-	"github.com/go-quicktest/qt"
 	"github.com/google/go-cmp/cmp"
+	"github.com/marco-m/rosina"
 )
 
 func TestUsage(t *testing.T) {
@@ -17,15 +17,15 @@ func TestUsage(t *testing.T) {
 	cli := New[any]("bang", "bangs head against wall", nil)
 	cli.AddFlag(&Flag{
 		Value: Int(&args.count, 3),
-		Short: "c", Long: "count", Label: "N", Desc: "How many times",
+		Short: "c", Long: "count", Label: "N", Help: "How many times",
 	})
 	cli.AddFlag(&Flag{
 		Value: String(&args.wall, "cardboard"),
-		Long:  "wall", Desc: "Type of wall",
+		Long:  "wall", Help: "Type of wall",
 	})
 	cli.AddFlag(&Flag{
 		Value: Bool(&args.dryRun, false),
-		Long:  "dry-run", Desc: "Enable dry-run",
+		Long:  "dry-run", Help: "Enable dry-run",
 	})
 
 	want := `bang -- bangs head against wall
@@ -43,7 +43,8 @@ Options:
 
 	err := cli.usage()
 
-	qt.Assert(t, qt.ErrorIs(err, ErrHelp))
+	rosina.AssertErrorIs(t, err, ErrHelp)
+
 	if x := cmp.Diff(want, err.Error()); x != "" {
 		t.Fatal("\nwant ---\nhave +++\n", x)
 	}

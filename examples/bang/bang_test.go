@@ -4,8 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/go-quicktest/qt"
-	"github.com/marco-m/clim/testutils"
+	"github.com/marco-m/rosina"
 )
 
 func TestBang(t *testing.T) {
@@ -13,11 +12,11 @@ func TestBang(t *testing.T) {
 2 bang against cardboard
 3 bang against cardboard
 `
-	reset := testutils.InterceptOutput(t, &os.Stdout)
+	reset := rosina.InterceptOutput(t, &os.Stdout)
 
 	err := mainErr([]string{})
-	qt.Assert(t, qt.IsNil(err))
+	rosina.AssertNoError(t, err)
 
 	out := reset()
-	qt.Assert(t, qt.Equals(out, want))
+	rosina.AssertEqual(t, out, want, "stdout")
 }

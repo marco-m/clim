@@ -88,6 +88,19 @@ func (cli *CLI[T]) SetFooter(footer string) {
 	cli.footer = strings.TrimSpace(footer)
 }
 
+// A Flag represents the state of a flag.
+// See also [CLI.AddFlag].
+type Flag struct {
+	Value    Value  // Final value, once parsed, mandatory.
+	Short    string // Short flag, optional.
+	Long     string // Long flag, mandatory.
+	Label    string // Placeholder in usage message, optional.
+	Help     string // Help text, optional.
+	Required bool   // Optional, default false.
+	//
+	defValue string // Default value, for usage message. Taken from Value.
+}
+
 // AddFlag adds a [Flag] to cli.
 // The type and value of the flag are represented by the field [Flag.Value],
 // which holds either one of the implementation of [Value] from the clim package
@@ -160,25 +173,30 @@ func (cli *CLI[T]) AddFlag(flag *Flag) {
 	cli.long2flag[flag.Long] = flag
 }
 
-// AddCLI adds a sub CLI, that is, a subcommand, with name and desc,
-// and sets action, to be returned by a successful parse.
-func (cli *CLI[T]) AddCLI(name string, desc string, action ActionFn[T]) *CLI[T] {
-	subCLI := New[T](name, desc, action)
-	subCLI.parent = cli.name
-	cli.subCLIs = append(cli.subCLIs, subCLI)
-	return subCLI
+// AddCLI adds child (which must be correctly setup) to this CLI.
+func (cli *CLI[T]) AddCLI(child *CLI[T]) *CLI[T] {
+	child.parent = cli.name
+	cli.subCLIs = append(cli.subCLIs, child)
+	return child
 }
 
 // AddGroup adds the subclis to the group name.
 func (cli *CLI[T]) AddGroup(name string, clis ...*CLI[T]) {
+	for _, child := range clis {
+		if !slices.Contains(cli.subCLIs, child) {
+			msg := fmt.Sprintf("before adding %s to a group, it must be added to a parent with AddCLI",
+				child.name)
+			panic(msg)
+		}
+	}
 	cli.groups = append(cli.groups, cliGroup[T]{name, clis})
 }
 
-// Args returns the positional arguments, if any.
+// PosArgs returns the positional arguments, if any.
 // Must be called after Parse.
 // WARNING will probably disappear, replaced by support for positional
 // arguments parsing.
-func (cmd *CLI[T]) Args() []string {
+func (cmd *CLI[T]) PosArgs() []string {
 	return cmd.positionals
 }
 
@@ -408,7 +426,7 @@ func (cli *CLI[T]) usageOptions() string {
 	fmt.Fprintf(&bld, "Options:\n\n")
 	for i, long := range longs {
 		flag := cli.long2flag[long]
-		fmt.Fprintf(&bld, "%-*s%s", maxColWidth+gutter, lines[i], flag.Desc)
+		fmt.Fprintf(&bld, "%-*s%s", maxColWidth+gutter, lines[i], flag.Help)
 		if flag.defValue != "" && !flag.Required {
 			fmt.Fprintf(&bld, " (default: %s)", flag.defValue)
 		}

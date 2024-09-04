@@ -37,23 +37,31 @@ type outgoingCmd struct {
 	bookmarks   bool
 }
 
-func newOutgoingCLI(parentCli *clim.CLI[user]) *clim.CLI[user] {
+func newOutgoingCLI() *clim.CLI[user] {
 	outgoingCmd := outgoingCmd{}
 
-	cli := parentCli.AddCLI("outgoing",
+	cli := clim.New("outgoing",
 		"show changesets not found in the destination",
 		outgoingCmd.Run)
 
-	cli.AddFlag(&clim.Flag{Value: clim.Bool(&outgoingCmd.force, false),
+	cli.AddFlag(&clim.Flag{
+		Value: clim.Bool(&outgoingCmd.force, false),
 		Short: "f", Long: "force",
-		Desc: "run even when the destination is unrelated"})
-	cli.AddFlag(&clim.Flag{Value: clim.StringSlice(&outgoingCmd.rev, nil),
+		Help: "run even when the destination is unrelated",
+	})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.StringSlice(&outgoingCmd.rev, nil),
 		Short: "r", Long: "rev", Label: "REV[,REV,..]",
-		Desc: "changeset(s) intended to be included in the destination"})
-	cli.AddFlag(&clim.Flag{Value: clim.Bool(&outgoingCmd.newestFirst, false),
-		Short: "n", Long: "newest-first", Desc: "show newest record first"})
-	cli.AddFlag(&clim.Flag{Value: clim.Bool(&outgoingCmd.bookmarks, false),
-		Short: "B", Long: "bookmarks", Desc: "compare bookmarks"})
+		Help: "changeset(s) intended to be included in the destination",
+	})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.Bool(&outgoingCmd.newestFirst, false),
+		Short: "n", Long: "newest-first", Help: "show newest record first",
+	})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.Bool(&outgoingCmd.bookmarks, false),
+		Short: "B", Long: "bookmarks", Help: "compare bookmarks",
+	})
 
 	return cli
 }

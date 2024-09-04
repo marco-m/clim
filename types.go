@@ -37,19 +37,6 @@ func isBoolValue(value Value) bool {
 	return false
 }
 
-// A Flag represents the state of a flag.
-// See also [CLI.AddFlag].
-type Flag struct {
-	Value    Value  // Final value, once parsed, mandatory.
-	Short    string // Short flag, optional.
-	Long     string // Long flag, mandatory.
-	Label    string // Placeholder in usage message, optional.
-	Desc     string // Description, optional.
-	Required bool   // Optional, default false.
-	//
-	defValue string // Default value, for usage message. Taken from Value.
-}
-
 //
 // int Value
 //

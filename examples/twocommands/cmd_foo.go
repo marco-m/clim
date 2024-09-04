@@ -10,15 +10,15 @@ type fooCmd struct {
 	soft bool
 }
 
-func newFooCLI(parentCli *clim.CLI[App]) *clim.CLI[App] {
+func newFooCLI() *clim.CLI[App] {
 	fooCmd := fooCmd{}
 
-	cli := parentCli.AddCLI("foo",
-		"simple foos all day",
-		fooCmd.Run)
+	cli := clim.New("foo", "simple foos all day", fooCmd.Run)
 
-	cli.AddFlag(&clim.Flag{Value: clim.Bool(&fooCmd.soft, false),
-		Long: "soft", Desc: "make softer foos"})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.Bool(&fooCmd.soft, false),
+		Long:  "soft", Help: "make softer foos",
+	})
 
 	return cli
 }
