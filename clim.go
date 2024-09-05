@@ -47,10 +47,11 @@ type CLI[T any] struct {
 	longSeen    map[string]struct{} // Options seen on the command-line
 	positionals []string
 	//
-	parent  string
-	subCLIs []*CLI[T]
-	action  ActionFn[T]
-	groups  []cliGroup[T]
+	parent     *CLI[T]
+	rootToHere string
+	subCLIs    []*CLI[T]
+	action     ActionFn[T]
+	groups     []cliGroup[T]
 }
 
 type cliGroup[T any] struct {
@@ -73,6 +74,7 @@ func New[T any](name string, oneline string, action ActionFn[T]) *CLI[T] {
 		long2flag:  make(map[string]*Flag),
 		short2long: make(map[string]string),
 		longSeen:   map[string]struct{}{},
+		rootToHere: name, // if child, overwritten by AddCLI.
 	}
 }
 
@@ -175,7 +177,8 @@ func (cli *CLI[T]) AddFlag(flag *Flag) {
 
 // AddCLI adds child (which must be correctly setup) to this CLI.
 func (cli *CLI[T]) AddCLI(child *CLI[T]) *CLI[T] {
-	child.parent = cli.name
+	child.parent = cli
+	child.rootToHere = strings.Join(pathRootToNode(child), " ")
 	cli.subCLIs = append(cli.subCLIs, child)
 	return child
 }
@@ -341,11 +344,7 @@ func (cli *CLI[T]) usage() error {
 		bld.Reset()
 	}
 
-	parentAndMe := cli.name
-	if cli.parent != "" {
-		parentAndMe = cli.parent + " " + cli.name
-	}
-	fmt.Fprintf(&bld, "%s -- %s\n\n", parentAndMe, cli.oneline)
+	fmt.Fprintf(&bld, "%s -- %s\n\n", cli.rootToHere, cli.oneline)
 
 	if cli.description != "" {
 		for _, line := range strings.Split(cli.description, "\n") {
@@ -354,7 +353,7 @@ func (cli *CLI[T]) usage() error {
 		fmt.Fprintln(&bld)
 	}
 
-	fmt.Fprintf(&bld, "Usage: %s ", parentAndMe)
+	fmt.Fprintf(&bld, "Usage: %s ", cli.rootToHere)
 	if len(cli.subCLIs) > 0 {
 		fmt.Fprintf(&bld, "<command> ")
 	}
@@ -394,6 +393,23 @@ func (cli *CLI[T]) usage() error {
 	}
 
 	return helpError("%s", bld.String()+cli.usageOptions())
+}
+
+// pathRootToNode returns the CLI names in the tree path from the root to
+// 'node'.
+// TODO write test and add this to all errors?
+func pathRootToNode[T any](node *CLI[T]) []string {
+	var path []string
+	cursor := node
+	for {
+		path = append(path, cursor.name)
+		if cursor.parent == nil {
+			break
+		}
+		cursor = cursor.parent
+	}
+	slices.Reverse(path)
+	return path
 }
 
 func (cli *CLI[T]) usageOptions() string {

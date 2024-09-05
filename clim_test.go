@@ -268,7 +268,7 @@ func TestPosArgs(t *testing.T) {
 	}
 }
 
-func TestRequiredHelp(t *testing.T) {
+func TestHelpOfRequiredFlag(t *testing.T) {
 	var count int
 	var level int
 	cli := clim.New[any]("bang", "bang head", nil)
