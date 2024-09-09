@@ -1,0 +1,23 @@
+#
+# run, all defaults
+#
+exec bang
+! stderr .
+cmp stdout out.default.WANT
+
+#
+# run, custom values
+#
+exec bang --wall=steel --count=5
+cmp stdout out.custom.WANT
+
+-- out.default.WANT --
+1 bang against cardboard
+2 bang against cardboard
+3 bang against cardboard
+-- out.custom.WANT --
+1 bang against steel
+2 bang against steel
+3 bang against steel
+4 bang against steel
+5 bang against steel

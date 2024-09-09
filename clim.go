@@ -20,17 +20,17 @@ var (
 	ErrParse = errors.New("")
 )
 
-// ParseError creates an error that unwraps to [ErrParse].
+// NewParseError creates an error that unwraps to [ErrParse].
 // A user implementation of [Value] should use this function to return a parse
 // error, so that the recommended mainInt function (see in directory examples)
 // can stay generic.
-func ParseError(format string, a ...any) error {
+func NewParseError(format string, a ...any) error {
 	return fmt.Errorf("%w%s", ErrParse, fmt.Sprintf(format, a...))
 }
 
-// helpError creates an error that unwraps to [ErrHelp].
+// newHelpError creates an error that unwraps to [ErrHelp].
 // See in directory examples how to handle it.
-func helpError(format string, a ...any) error {
+func newHelpError(format string, a ...any) error {
 	return fmt.Errorf("%w%s", ErrHelp, fmt.Sprintf(format, a...))
 }
 
@@ -232,7 +232,7 @@ func (cli *CLI[T]) Parse(args []string) (ActionFn[T], error) {
 	}
 	if len(missing) > 0 {
 		slices.Sort(missing)
-		return nil, ParseError("missing required options: %s",
+		return nil, NewParseError("missing required options: %s",
 			strings.Join(missing, ", "))
 	}
 
@@ -245,7 +245,7 @@ func (cli *CLI[T]) Parse(args []string) (ActionFn[T], error) {
 	// If we are here, we have subcommands.
 
 	if len(cli.positionals) == 0 {
-		return nil, ParseError("expected a command")
+		return nil, NewParseError("expected a command")
 	}
 	command := cli.positionals[0]
 	for _, p := range cli.subCLIs {
@@ -254,7 +254,18 @@ func (cli *CLI[T]) Parse(args []string) (ActionFn[T], error) {
 		}
 	}
 
-	return nil, ParseError("unrecognized command %q", command)
+	return nil, NewParseError("unrecognized command %q", command)
+}
+
+// CountTrue returns the number of args that are true.
+func CountTrue(args ...bool) int {
+	n := 0
+	for _, v := range args {
+		if v {
+			n++
+		}
+	}
+	return n
 }
 
 // _                           0  1              2            34  5
@@ -276,7 +287,7 @@ func (cli *CLI[T]) parseOne(args []string) (string, int, error) {
 	matches := flagRE.FindStringSubmatch(token)
 	if len(matches) != 6 {
 		return "", 0,
-			ParseError("clim internal error (regex); token: %q, matches: %q",
+			NewParseError("clim internal error (regex); token: %q, matches: %q",
 				token, matches)
 	}
 	hyphens := matches[1]
@@ -300,35 +311,35 @@ func (cli *CLI[T]) parseOne(args []string) (string, int, error) {
 	if len(name) == 1 {
 		long = cli.short2long[name]
 		if long == "" {
-			return "", 0, ParseError("unrecognized flag %q", token)
+			return "", 0, NewParseError("unrecognized flag %q", token)
 		}
 	}
 	flag := cli.long2flag[long]
 	if flag == nil {
-		return "", 0, ParseError("unrecognized flag %q", token)
+		return "", 0, NewParseError("unrecognized flag %q", token)
 	}
 
 	// Was the value provided in the same token, with "=" ?
 	if len(value) > 0 {
 		if err := flag.Value.Set(value); err != nil {
-			return "", 0, ParseError("setting %q: %s", token, err)
+			return "", 0, NewParseError("setting %q: %s", token, err)
 		}
 		return long, 1, nil
 	}
 
 	if isBoolValue(flag.Value) {
 		if err := flag.Value.Set("true"); err != nil {
-			return "", 0, ParseError("setting %q: %s", token, err)
+			return "", 0, NewParseError("setting %q: %s", token, err)
 		}
 		return long, 1, nil
 	}
 
 	if len(args) == 1 {
-		return "", 0, ParseError("flag %q requires a value", token)
+		return "", 0, NewParseError("flag %q requires a value", token)
 	}
 	nextValue := args[1]
 	if err := flag.Value.Set(nextValue); err != nil {
-		return "", 0, ParseError("setting %q %q: %s", token, nextValue, err)
+		return "", 0, NewParseError("setting %q %q: %s", token, nextValue, err)
 	}
 	return long, 2, nil
 }
@@ -362,7 +373,11 @@ func (cli *CLI[T]) usage() error {
 	if cli.examples != "" {
 		fmt.Fprintf(&bld, "Examples:\n\n")
 		for _, line := range strings.Split(cli.examples, "\n") {
-			fmt.Fprintf(&bld, " %s\n", line)
+			if line != "" {
+				fmt.Fprintf(&bld, " %s\n", line)
+			} else {
+				fmt.Fprintln(&bld)
+			}
 		}
 		fmt.Fprintln(&bld)
 	}
@@ -392,7 +407,7 @@ func (cli *CLI[T]) usage() error {
 		fmt.Fprintln(&bld)
 	}
 
-	return helpError("%s", bld.String()+cli.usageOptions())
+	return newHelpError("%s", bld.String()+cli.usageOptions())
 }
 
 // pathRootToNode returns the CLI names in the tree path from the root to
@@ -470,7 +485,7 @@ func (cli *CLI[T]) usageOptions() string {
 
 func (cli *CLI[T]) run(uctx T) error {
 	if cli.action == nil {
-		return ParseError("command '%s': no action registered", cli.name)
+		return NewParseError("command '%s': no action registered", cli.name)
 	}
 	return cli.action(uctx)
 }
