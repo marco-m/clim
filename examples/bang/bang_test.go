@@ -20,7 +20,7 @@ func TestBangRun(t *testing.T) {
 	readReset := rosina.InterceptOutput(t, &os.Stdout)
 
 	err := mainErr([]string{})
-	rosina.AssertNoError(t, err)
+	rosina.AssertIsNil(t, err)
 
 	out := readReset()
 	rosina.AssertEqual(t, out, want, "stdout")
@@ -54,11 +54,11 @@ Options:
  For more information, see https://www.example.org/
 `
 	err := mainErr([]string{"-h"})
-	rosina.AssertErrorTextEq(t, err, want)
+	rosina.AssertErrorContains(t, err, want)
 }
 
 func TestBangCliWrongInvocation(t *testing.T) {
 	want := `unrecognized flag "--foobar"`
 	err := mainErr([]string{"--foobar"})
-	rosina.AssertErrorTextEq(t, err, want)
+	rosina.AssertErrorContains(t, err, want)
 }

@@ -3,7 +3,6 @@ package clim
 import (
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/marco-m/rosina"
 )
 
@@ -44,8 +43,5 @@ Options:
 	err := cli.usage()
 
 	rosina.AssertErrorIs(t, err, ErrHelp)
-
-	if x := cmp.Diff(want, err.Error()); x != "" {
-		t.Fatal("\nwant ---\nhave +++\n", x)
-	}
+	rosina.AssertTextEqual(t, err.Error(), want, "error message")
 }

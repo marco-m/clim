@@ -14,9 +14,13 @@ import (
 type ActionFn[T any] func(uctx T) error
 
 var (
-	// User requested help.
+	// ErrHelp is returned when the user asked for help.
+	// Check for this case with errors.Is(err, clim.ErrHelp)
 	ErrHelp = errors.New("")
-	// Either parse or validation error.
+	// ErrParse is returned in case of parse (by clim) or validation error
+	// (by the user program).
+	// Check for this case with errors.Is(err, clim.ErrParse).
+	// See also NewParseError.
 	ErrParse = errors.New("")
 )
 
@@ -147,7 +151,7 @@ func (cli *CLI[T]) AddFlag(flag *Flag) {
 		panic("long flag name cannot be empty")
 	}
 	if len(flag.Long) < 2 {
-		panic(fmt.Sprintf("long flag name %q must be at least 2 character", flag.Long))
+		panic(fmt.Sprintf("long flag name %q must be at least 2 characters", flag.Long))
 	}
 	if flag.Long == "help" {
 		panic(`cannot override long flag name "help"`)
@@ -177,6 +181,13 @@ func (cli *CLI[T]) AddFlag(flag *Flag) {
 
 // AddCLI adds child (which must be correctly setup) to this CLI.
 func (cli *CLI[T]) AddCLI(child *CLI[T]) *CLI[T] {
+	for _, sc := range cli.subCLIs {
+		if child.name == sc.name {
+			// `banana: long flag name "count" already defined`
+			panic(fmt.Sprintf("%s: subcommand %q already defined",
+				cli.rootToHere, child.name))
+		}
+	}
 	child.parent = cli
 	child.rootToHere = strings.Join(pathRootToNode(child), " ")
 	cli.subCLIs = append(cli.subCLIs, child)
@@ -185,10 +196,14 @@ func (cli *CLI[T]) AddCLI(child *CLI[T]) *CLI[T] {
 
 // AddGroup adds the subclis to the group name.
 func (cli *CLI[T]) AddGroup(name string, clis ...*CLI[T]) {
+	if len(clis) == 0 {
+		msg := fmt.Sprintf("AddGroup %s: child list is empty", name)
+		panic(msg)
+	}
 	for _, child := range clis {
 		if !slices.Contains(cli.subCLIs, child) {
-			msg := fmt.Sprintf("before adding %s to a group, it must be added to a parent with AddCLI",
-				child.name)
+			msg := fmt.Sprintf("AddGroup %s: child %s is missing previous AddCLI",
+				name, child.name)
 			panic(msg)
 		}
 	}
@@ -329,7 +344,8 @@ func (cli *CLI[T]) parseOne(args []string) (string, int, error) {
 
 	if isBoolValue(flag.Value) {
 		if err := flag.Value.Set("true"); err != nil {
-			return "", 0, NewParseError("setting %q: %s", token, err)
+			return "", 0, NewParseError("clim internal error: setting %q: %s",
+				token, err)
 		}
 		return long, 1, nil
 	}

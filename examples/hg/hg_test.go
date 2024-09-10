@@ -14,7 +14,7 @@ func TestClone(t *testing.T) {
 	readReset := rosina.InterceptOutput(t, &os.Stdout)
 
 	err := mainErr([]string{"clone"})
-	rosina.AssertNoError(t, err)
+	rosina.AssertIsNil(t, err)
 
 	out := readReset()
 	rosina.AssertEqual(t, out, want, "stdout")
@@ -27,7 +27,7 @@ func TestInit(t *testing.T) {
 	readReset := rosina.InterceptOutput(t, &os.Stdout)
 
 	err := mainErr([]string{"init"})
-	rosina.AssertNoError(t, err)
+	rosina.AssertIsNil(t, err)
 
 	out := readReset()
 	rosina.AssertEqual(t, out, want, "stdout")
@@ -40,7 +40,7 @@ func TestIncoming(t *testing.T) {
 	readReset := rosina.InterceptOutput(t, &os.Stdout)
 
 	err := mainErr([]string{"incoming"})
-	rosina.AssertNoError(t, err)
+	rosina.AssertIsNil(t, err)
 
 	out := readReset()
 	rosina.AssertEqual(t, out, want, "stdout")
@@ -53,7 +53,7 @@ func TestOutgoing(t *testing.T) {
 	readReset := rosina.InterceptOutput(t, &os.Stdout)
 
 	err := mainErr([]string{"outgoing"})
-	rosina.AssertNoError(t, err)
+	rosina.AssertIsNil(t, err)
 
 	out := readReset()
 	rosina.AssertEqual(t, out, want, "stdout")
