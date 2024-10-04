@@ -79,6 +79,8 @@ func IntSlice(dst *[]int, defval []int) *intSliceValue {
 
 // Set is called by [CLI.Parse].
 func (is *intSliceValue) Set(val string) error {
+	// Reset any default values
+	*is = make(intSliceValue, 0)
 	for _, s := range strings.Split(val, ",") {
 		v, err := strconv.Atoi(s)
 		if err != nil {

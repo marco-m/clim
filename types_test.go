@@ -24,7 +24,7 @@ func TestParseIntSuccess(t *testing.T) {
 		})
 
 		_, err := cli.Parse(tc.args)
-		rosina.AssertNoError(t, err)
+		rosina.AssertIsNil(t, err)
 		rosina.AssertEqual(t, count, tc.want, "count")
 	}
 
@@ -72,7 +72,8 @@ func TestParseIntFailure(t *testing.T) {
 		})
 
 		_, err := cli.Parse(tc.args)
-		rosina.AssertErrorTextEq(t, err, tc.wantErr)
+		rosina.AssertErrorIs(t, err, clim.ErrParse)
+		rosina.AssertErrorContains(t, err, tc.wantErr)
 	}
 
 	testCases := []testCase{
@@ -81,11 +82,43 @@ func TestParseIntFailure(t *testing.T) {
 			args:    []string{"-c", "x"},
 			wantErr: `setting "-c" "x": could not parse "x" as int (strconv.ParseInt: parsing "x": invalid syntax)`,
 		},
+		{
+			name:    "missing value",
+			args:    []string{"-c"},
+			wantErr: `flag "-c" requires a value`,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) { test(t, tc) })
 	}
+}
+
+func TestParseIntSliceSuccess(t *testing.T) {
+	var pippos []int
+	cli := clim.New[any]("bang", "bangs head against wall", nil)
+	cli.AddFlag(&clim.Flag{
+		Value: clim.IntSlice(&pippos, []int{10}),
+		Short: "p", Long: "pippos",
+	})
+
+	_, err := cli.Parse([]string{"--pippos=1,2,3"})
+	rosina.AssertIsNil(t, err)
+	rosina.AssertDeepEqual(t, pippos, []int{1, 2, 3}, "pippos")
+}
+
+func TestParseIntSliceFailure(t *testing.T) {
+	var pippos []int
+	cli := clim.New[any]("bang", "bangs head against wall", nil)
+	cli.AddFlag(&clim.Flag{
+		Value: clim.IntSlice(&pippos, nil),
+		Short: "p", Long: "pippos",
+	})
+
+	_, err := cli.Parse([]string{"--pippos=a,b,c"})
+	rosina.AssertErrorIs(t, err, clim.ErrParse)
+	rosina.AssertErrorContains(t, err,
+		`setting "--pippos=a,b,c": could not parse "a" as int (strconv.Atoi: parsing "a": invalid syntax)`)
 }
 
 func TestParseString(t *testing.T) {
@@ -104,7 +137,7 @@ func TestParseString(t *testing.T) {
 		})
 
 		_, err := cli.Parse(tc.args)
-		rosina.AssertNoError(t, err)
+		rosina.AssertIsNil(t, err)
 		rosina.AssertEqual(t, fruit, tc.want, "fruit")
 	}
 
@@ -136,6 +169,19 @@ func TestParseString(t *testing.T) {
 	}
 }
 
+func TestParseStringSliceSuccess(t *testing.T) {
+	var mickeys []string
+	cli := clim.New[any]("bang", "bangs head against wall", nil)
+	cli.AddFlag(&clim.Flag{
+		Value: clim.StringSlice(&mickeys, []string{"x"}),
+		Short: "m", Long: "mickeys",
+	})
+
+	_, err := cli.Parse([]string{"--mickeys=a,b,c"})
+	rosina.AssertIsNil(t, err)
+	rosina.AssertDeepEqual(t, mickeys, []string{"a", "b", "c"}, "mickeys")
+}
+
 func TestParseBoolSuccess(t *testing.T) {
 	type testCase struct {
 		name string
@@ -152,7 +198,7 @@ func TestParseBoolSuccess(t *testing.T) {
 		})
 
 		_, err := cli.Parse(tc.args)
-		rosina.AssertNoError(t, err)
+		rosina.AssertIsNil(t, err)
 		rosina.AssertEqual(t, sliced, tc.want, "sliced")
 	}
 
@@ -173,12 +219,12 @@ func TestParseBoolSuccess(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "long with =",
+			name: "explicit value, true",
 			args: []string{"--sliced=true"},
 			want: true,
 		},
 		{
-			name: "long with =",
+			name: "explicit value, false",
 			args: []string{"--sliced=false"},
 			want: false,
 		},
@@ -205,7 +251,8 @@ func TestParseBoolFailure(t *testing.T) {
 		})
 
 		_, err := cli.Parse(tc.args)
-		rosina.AssertErrorTextEq(t, err, tc.wantErr)
+		rosina.AssertErrorIs(t, err, clim.ErrParse)
+		rosina.AssertErrorContains(t, err, tc.wantErr)
 	}
 
 	testCases := []testCase{
@@ -230,7 +277,7 @@ func TestParseDurationSuccess(t *testing.T) {
 	})
 
 	_, err := cli.Parse([]string{"--timeout=32m4ms"})
-	rosina.AssertNoError(t, err)
+	rosina.AssertIsNil(t, err)
 	rosina.AssertEqual(t, timeout, 32*time.Minute+4*time.Millisecond, "timeout")
 }
 
@@ -243,6 +290,7 @@ func TestParseDurationFailure(t *testing.T) {
 	})
 
 	_, err := cli.Parse([]string{"--timeout=78"})
-	rosina.AssertErrorTextEq(t, err,
+	rosina.AssertErrorIs(t, err, clim.ErrParse)
+	rosina.AssertErrorContains(t, err,
 		`setting "--timeout=78": time: missing unit in duration "78"`)
 }

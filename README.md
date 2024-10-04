@@ -88,6 +88,16 @@ Options:
 
 See directory [examples](examples/).
 
+## Testing
+
+There are two ways to test a program using clim. Pick the one you prefer:
+
+1. Directly with Go tests.
+2. With [rogpeppe/go-internal/testscript](https://github.com/rogpeppe/go-internal). If you are not familiar with testscript, try it. It is both powerful and simple. For a gentle introduction, see the blog series:
+   [Test scripts in Go](https://bitfieldconsulting.com/posts/test-scripts).
+
+In particular, see [examples/bang](examples/bang), where the two approaches are shown.
+
 ## Status
 
 Version 0.x, API can have breaking changes.

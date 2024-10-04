@@ -14,23 +14,27 @@ import (
 type ActionFn[T any] func(uctx T) error
 
 var (
-	// User requested help.
+	// ErrHelp is returned when the user asked for help.
+	// Check for this case with errors.Is(err, clim.ErrHelp)
 	ErrHelp = errors.New("")
-	// Either parse or validation error.
+	// ErrParse is returned in case of parse (by clim) or validation error
+	// (by the user program).
+	// Check for this case with errors.Is(err, clim.ErrParse).
+	// See also NewParseError.
 	ErrParse = errors.New("")
 )
 
-// ParseError creates an error that unwraps to [ErrParse].
+// NewParseError creates an error that unwraps to [ErrParse].
 // A user implementation of [Value] should use this function to return a parse
 // error, so that the recommended mainInt function (see in directory examples)
 // can stay generic.
-func ParseError(format string, a ...any) error {
+func NewParseError(format string, a ...any) error {
 	return fmt.Errorf("%w%s", ErrParse, fmt.Sprintf(format, a...))
 }
 
-// helpError creates an error that unwraps to [ErrHelp].
+// newHelpError creates an error that unwraps to [ErrHelp].
 // See in directory examples how to handle it.
-func helpError(format string, a ...any) error {
+func newHelpError(format string, a ...any) error {
 	return fmt.Errorf("%w%s", ErrHelp, fmt.Sprintf(format, a...))
 }
 
@@ -47,10 +51,11 @@ type CLI[T any] struct {
 	longSeen    map[string]struct{} // Options seen on the command-line
 	positionals []string
 	//
-	parent  string
-	subCLIs []*CLI[T]
-	action  ActionFn[T]
-	groups  []cliGroup[T]
+	parent     *CLI[T]
+	rootToHere string
+	subCLIs    []*CLI[T]
+	action     ActionFn[T]
+	groups     []cliGroup[T]
 }
 
 type cliGroup[T any] struct {
@@ -73,6 +78,7 @@ func New[T any](name string, oneline string, action ActionFn[T]) *CLI[T] {
 		long2flag:  make(map[string]*Flag),
 		short2long: make(map[string]string),
 		longSeen:   map[string]struct{}{},
+		rootToHere: name, // if child, overwritten by AddCLI.
 	}
 }
 
@@ -145,7 +151,7 @@ func (cli *CLI[T]) AddFlag(flag *Flag) {
 		panic("long flag name cannot be empty")
 	}
 	if len(flag.Long) < 2 {
-		panic(fmt.Sprintf("long flag name %q must be at least 2 character", flag.Long))
+		panic(fmt.Sprintf("long flag name %q must be at least 2 characters", flag.Long))
 	}
 	if flag.Long == "help" {
 		panic(`cannot override long flag name "help"`)
@@ -175,17 +181,29 @@ func (cli *CLI[T]) AddFlag(flag *Flag) {
 
 // AddCLI adds child (which must be correctly setup) to this CLI.
 func (cli *CLI[T]) AddCLI(child *CLI[T]) *CLI[T] {
-	child.parent = cli.name
+	for _, sc := range cli.subCLIs {
+		if child.name == sc.name {
+			// `banana: long flag name "count" already defined`
+			panic(fmt.Sprintf("%s: subcommand %q already defined",
+				cli.rootToHere, child.name))
+		}
+	}
+	child.parent = cli
+	child.rootToHere = strings.Join(pathRootToNode(child), " ")
 	cli.subCLIs = append(cli.subCLIs, child)
 	return child
 }
 
 // AddGroup adds the subclis to the group name.
 func (cli *CLI[T]) AddGroup(name string, clis ...*CLI[T]) {
+	if len(clis) == 0 {
+		msg := fmt.Sprintf("AddGroup %s: child list is empty", name)
+		panic(msg)
+	}
 	for _, child := range clis {
 		if !slices.Contains(cli.subCLIs, child) {
-			msg := fmt.Sprintf("before adding %s to a group, it must be added to a parent with AddCLI",
-				child.name)
+			msg := fmt.Sprintf("AddGroup %s: child %s is missing previous AddCLI",
+				name, child.name)
 			panic(msg)
 		}
 	}
@@ -229,7 +247,7 @@ func (cli *CLI[T]) Parse(args []string) (ActionFn[T], error) {
 	}
 	if len(missing) > 0 {
 		slices.Sort(missing)
-		return nil, ParseError("missing required options: %s",
+		return nil, NewParseError("missing required options: %s",
 			strings.Join(missing, ", "))
 	}
 
@@ -242,7 +260,7 @@ func (cli *CLI[T]) Parse(args []string) (ActionFn[T], error) {
 	// If we are here, we have subcommands.
 
 	if len(cli.positionals) == 0 {
-		return nil, ParseError("expected a command")
+		return nil, NewParseError("expected a command")
 	}
 	command := cli.positionals[0]
 	for _, p := range cli.subCLIs {
@@ -251,7 +269,18 @@ func (cli *CLI[T]) Parse(args []string) (ActionFn[T], error) {
 		}
 	}
 
-	return nil, ParseError("unrecognized command %q", command)
+	return nil, NewParseError("unrecognized command %q", command)
+}
+
+// CountTrue returns the number of args that are true.
+func CountTrue(args ...bool) int {
+	n := 0
+	for _, v := range args {
+		if v {
+			n++
+		}
+	}
+	return n
 }
 
 // _                           0  1              2            34  5
@@ -273,7 +302,7 @@ func (cli *CLI[T]) parseOne(args []string) (string, int, error) {
 	matches := flagRE.FindStringSubmatch(token)
 	if len(matches) != 6 {
 		return "", 0,
-			ParseError("clim internal error (regex); token: %q, matches: %q",
+			NewParseError("clim internal error (regex); token: %q, matches: %q",
 				token, matches)
 	}
 	hyphens := matches[1]
@@ -297,35 +326,36 @@ func (cli *CLI[T]) parseOne(args []string) (string, int, error) {
 	if len(name) == 1 {
 		long = cli.short2long[name]
 		if long == "" {
-			return "", 0, ParseError("unrecognized flag %q", token)
+			return "", 0, NewParseError("unrecognized flag %q", token)
 		}
 	}
 	flag := cli.long2flag[long]
 	if flag == nil {
-		return "", 0, ParseError("unrecognized flag %q", token)
+		return "", 0, NewParseError("unrecognized flag %q", token)
 	}
 
 	// Was the value provided in the same token, with "=" ?
 	if len(value) > 0 {
 		if err := flag.Value.Set(value); err != nil {
-			return "", 0, ParseError("setting %q: %s", token, err)
+			return "", 0, NewParseError("setting %q: %s", token, err)
 		}
 		return long, 1, nil
 	}
 
 	if isBoolValue(flag.Value) {
 		if err := flag.Value.Set("true"); err != nil {
-			return "", 0, ParseError("setting %q: %s", token, err)
+			return "", 0, NewParseError("clim internal error: setting %q: %s",
+				token, err)
 		}
 		return long, 1, nil
 	}
 
 	if len(args) == 1 {
-		return "", 0, ParseError("flag %q requires a value", token)
+		return "", 0, NewParseError("flag %q requires a value", token)
 	}
 	nextValue := args[1]
 	if err := flag.Value.Set(nextValue); err != nil {
-		return "", 0, ParseError("setting %q %q: %s", token, nextValue, err)
+		return "", 0, NewParseError("setting %q %q: %s", token, nextValue, err)
 	}
 	return long, 2, nil
 }
@@ -341,11 +371,7 @@ func (cli *CLI[T]) usage() error {
 		bld.Reset()
 	}
 
-	parentAndMe := cli.name
-	if cli.parent != "" {
-		parentAndMe = cli.parent + " " + cli.name
-	}
-	fmt.Fprintf(&bld, "%s -- %s\n\n", parentAndMe, cli.oneline)
+	fmt.Fprintf(&bld, "%s -- %s\n\n", cli.rootToHere, cli.oneline)
 
 	if cli.description != "" {
 		for _, line := range strings.Split(cli.description, "\n") {
@@ -354,7 +380,7 @@ func (cli *CLI[T]) usage() error {
 		fmt.Fprintln(&bld)
 	}
 
-	fmt.Fprintf(&bld, "Usage: %s ", parentAndMe)
+	fmt.Fprintf(&bld, "Usage: %s ", cli.rootToHere)
 	if len(cli.subCLIs) > 0 {
 		fmt.Fprintf(&bld, "<command> ")
 	}
@@ -363,7 +389,11 @@ func (cli *CLI[T]) usage() error {
 	if cli.examples != "" {
 		fmt.Fprintf(&bld, "Examples:\n\n")
 		for _, line := range strings.Split(cli.examples, "\n") {
-			fmt.Fprintf(&bld, " %s\n", line)
+			if line != "" {
+				fmt.Fprintf(&bld, " %s\n", line)
+			} else {
+				fmt.Fprintln(&bld)
+			}
 		}
 		fmt.Fprintln(&bld)
 	}
@@ -393,7 +423,24 @@ func (cli *CLI[T]) usage() error {
 		fmt.Fprintln(&bld)
 	}
 
-	return helpError("%s", bld.String()+cli.usageOptions())
+	return newHelpError("%s", bld.String()+cli.usageOptions())
+}
+
+// pathRootToNode returns the CLI names in the tree path from the root to
+// 'node'.
+// TODO write test and add this to all errors?
+func pathRootToNode[T any](node *CLI[T]) []string {
+	var path []string
+	cursor := node
+	for {
+		path = append(path, cursor.name)
+		if cursor.parent == nil {
+			break
+		}
+		cursor = cursor.parent
+	}
+	slices.Reverse(path)
+	return path
 }
 
 func (cli *CLI[T]) usageOptions() string {
@@ -454,7 +501,7 @@ func (cli *CLI[T]) usageOptions() string {
 
 func (cli *CLI[T]) run(uctx T) error {
 	if cli.action == nil {
-		return ParseError("command '%s': no action registered", cli.name)
+		return NewParseError("command '%s': no action registered", cli.name)
 	}
 	return cli.action(uctx)
 }

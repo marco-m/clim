@@ -9,10 +9,10 @@ import (
 )
 
 func main() {
-	os.Exit(mainInt())
+	os.Exit(MainInt())
 }
 
-func mainInt() int {
+func MainInt() int {
 	err := mainErr(os.Args[1:])
 	if err == nil {
 		return 0
@@ -28,10 +28,12 @@ func mainInt() int {
 }
 
 type Application struct {
-	count    int
-	wall     string
-	dryRun   bool
-	sequence []int
+	count   int
+	wall    string
+	dryRun  bool
+	windows []int
+	doors   []int
+	floors  []string
 }
 
 func mainErr(args []string) error {
@@ -65,9 +67,19 @@ Could be multi-line.`)
 		Long:  "dry-run", Help: "Enable dry-run",
 	})
 	cli.AddFlag(&clim.Flag{
-		Value: clim.IntSlice(&app.sequence, []int{1, 2, 3}),
-		Short: "s", Long: "sequence", Label: "N[,N,..]",
-		Help: "bang sequence",
+		Value: clim.IntSlice(&app.windows, nil),
+		Long:  "windows", Label: "N[,N,..]",
+		Help: "Windows sequence",
+	})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.IntSlice(&app.doors, nil),
+		Long:  "doors", Label: "N[,N,..]",
+		Help: "Doors sequence",
+	})
+	cli.AddFlag(&clim.Flag{
+		Value: clim.StringSlice(&app.floors, nil),
+		Long:  "floors", Label: "F[,F,..]",
+		Help: "Floors sequence",
 	})
 
 	action, err := cli.Parse(args)
@@ -79,6 +91,12 @@ Could be multi-line.`)
 }
 
 func (args *Application) run(uctx int) error {
+	// Validation
+	if clim.CountTrue(args.doors != nil, args.windows != nil,
+		args.floors != nil) > 1 {
+		return clim.NewParseError("only one of doors, windows, floors can be specified")
+	}
+
 	for i := range args.count {
 		fmt.Println(i+1, "bang against", args.wall)
 	}

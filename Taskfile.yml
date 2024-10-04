@@ -1,0 +1,67 @@
+# Install `task` from https://taskfile.dev
+# Run `task --list` to start.
+
+version: "3"
+
+vars:
+  DATE: '{{ now | date "2006-01-02" }}'
+  REPO: github.com/marco-m/clim
+    # This would work also:
+    # sh: go list .
+  COMMIT:
+    sh: git log -n 1 --format=%h
+  BRANCH:
+    sh: git branch --show-current
+  # FIXME both commit and date (I think) can be obtained from the std/debug package
+  BUILD_INFO: "commit: {{.COMMIT}}, build date: {{.DATE}}"
+  # FIXME this is wrong probably
+  LDFLAGS: -w -X '{{.REPO}}/cim.buildinfo={{.BUILD_INFO}}'
+
+tasks:
+
+  install:deps:
+    desc: Install tool dependencies.
+    cmds:
+      - go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+      - go install gotest.tools/gotestsum@latest
+
+  lint:
+    desc: Lint the code.
+    cmds:
+      - golangci-lint run ./...
+
+  test:
+    desc: Run all the tests.
+    cmds:
+      - mkdir -p bin
+      # One day I will understand how to use -coverpkg=./... :-(
+      - gotestsum -- -coverprofile=bin/coverage.out ./...
+
+  test:args:
+    desc: 'Run the tests specified with task test:args -- ARGS'
+    cmds:
+      - mkdir -p bin
+      - gotestsum -- -coverprofile=bin/coverage.out {{.CLI_ARGS}}
+
+  browser:
+    desc: 'Show code coverage in browser (usage: task test:<subtarget> browser)'
+    cmds:
+      - go tool cover -html=bin/coverage.out
+
+  build:
+    desc: Build all.
+    cmds:
+      - go build -ldflags "{{.LDFLAGS}}" ./...
+
+  clean:
+    desc: Delete build artifacts
+    cmds:
+      - rm -r -f bin
+
+  ci:setup:
+    desc: Useful only when running under CI.
+    cmds:
+      - task: install:deps
+      # Running "go mod download" is optional, since "go build" would do it anyway.
+      # We run it explicitly to make the output of "go build" more focused.
+      - cmd: go mod download -x
