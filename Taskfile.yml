@@ -2,6 +2,7 @@
 # Run `task --list` to start.
 
 version: "3"
+set: [pipefail]
 
 vars:
   DATE: '{{ now | date "2006-01-02" }}'
@@ -33,15 +34,34 @@ tasks:
   test:
     desc: Run all the tests.
     cmds:
-      - mkdir -p bin
+      - cmd: mkdir -p bin
+        silent: true
       # One day I will understand how to use -coverpkg=./... :-(
-      - gotestsum -- -coverprofile=bin/coverage.out ./...
+      - gotestsum -- -coverprofile=bin/coverage.out .
+      - gotestsum -- ./examples/...
 
   test:args:
     desc: 'Run the tests specified with task test:args -- ARGS'
     cmds:
-      - mkdir -p bin
+      - cmd: mkdir -p bin
+        silent: true
       - gotestsum -- -coverprofile=bin/coverage.out {{.CLI_ARGS}}
+
+  check-coverage:
+    vars:
+      COVER: '97.7%'
+    cmds:
+      - go clean -testcache
+      - task: test
+      - cmd: |
+          have=$(go tool cover -func ./bin/coverage.out | grep ^total: | awk '{print $3}')
+          if [ $have != {{.COVER}} ]; then
+            echo "Coverage changed: have: $have; want: {{.COVER}}"
+            exit 1
+          else
+            echo "Coverage: $have"
+          fi
+        silent: true
 
   browser:
     desc: 'Show code coverage in browser (usage: task test:<subtarget> browser)'

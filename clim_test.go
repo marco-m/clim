@@ -118,7 +118,6 @@ Options:
 }
 
 func TestHelpSubCommands(t *testing.T) {
-	type Args struct{}
 	cli := clim.New[any]("bang", "bangs head against wall", nil)
 	subCli := clim.New[any]("sub", "I am a subcommand", nil)
 	cli.AddCLI(subCli)
@@ -142,7 +141,6 @@ Options:
 }
 
 func TestHelpSubCommandsGroup(t *testing.T) {
-	type Args struct{}
 	cli := clim.New[any]("bang", "bangs head against wall", nil)
 	subCliA := clim.New[any]("sub-A", "I am subcommand A", nil)
 	cli.AddCLI(subCliA)
