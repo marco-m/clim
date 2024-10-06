@@ -1,178 +1,12 @@
 package clim_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/marco-m/clim"
 	"github.com/marco-m/rosina"
 )
-
-func TestSimpleHelp(t *testing.T) {
-	type Args struct {
-		count  int
-		wall   string
-		dryRun bool
-	}
-	var args Args
-	cli := clim.New[any]("bang", "bangs head against wall", nil)
-
-	cli.AddFlag(&clim.Flag{
-		Value: clim.Int(&args.count, 3),
-		Short: "c",
-		Long:  "count",
-		Label: "N",
-		Help:  "How many times",
-	})
-	cli.AddFlag(&clim.Flag{
-		Value: clim.String(&args.wall, "cardboard"),
-		// Short is optional, here we don't set it.
-		Long: "wall",
-		// Default for Label: uppercase(Long)
-		Help: "Type of wall",
-	})
-	cli.AddFlag(&clim.Flag{
-		Value: clim.Bool(&args.dryRun, false),
-		Long:  "dry-run",
-		Help:  "Enable dry-run",
-	})
-
-	want := `bang -- bangs head against wall
-
-Usage: bang [options]
-
-Options:
-
- -c, --count N    How many times (default: 3)
- --dry-run        Enable dry-run (default: false)
- --wall WALL      Type of wall (default: cardboard)
-
- -h, --help       Print this help and exit
-`
-
-	_, err := cli.Parse([]string{"-h"})
-
-	rosina.AssertErrorIs(t, err, clim.ErrHelp)
-	rosina.AssertErrorContains(t, err, want)
-}
-
-func TestHelpOfRequiredFlag(t *testing.T) {
-	var count int
-	var level int
-	cli := clim.New[any]("bang", "bang head", nil)
-	cli.AddFlag(&clim.Flag{
-		// Default value with Required, will be ignored also in the help.
-		Value:    clim.Int(&count, 3),
-		Long:     "count",
-		Required: true,
-	})
-	cli.AddFlag(&clim.Flag{
-		// Default value without Required, normal handling.
-		Value: clim.Int(&level, 5),
-		Long:  "level",
-	})
-
-	want := `bang -- bang head
-
-Usage: bang [options]
-
-Options:
-
- --count COUNT     (required)
- --level LEVEL     (default: 5)
-
- -h, --help       Print this help and exit
-`
-
-	_, err := cli.Parse([]string{"-h"})
-
-	rosina.AssertErrorIs(t, err, clim.ErrHelp)
-	rosina.AssertErrorContains(t, err, want)
-}
-
-func TestHelpOfOptionalFields(t *testing.T) {
-	cli := clim.New[any]("bang", "bang head", nil)
-	cli.SetDescription("this is the description")
-	cli.SetExamples("this is the example")
-	cli.SetFooter("this is the footer")
-
-	_, err := cli.Parse([]string{"-h"})
-
-	rosina.AssertErrorIs(t, err, clim.ErrHelp)
-	rosina.AssertErrorContains(t, err,
-		`bang -- bang head
-
- this is the description
-
-Usage: bang [options]
-
-Examples:
-
- this is the example
-
-Options:
-
- -h, --help    Print this help and exit
-
- this is the footer
-`)
-}
-
-func TestHelpSubCommands(t *testing.T) {
-	cli := clim.New[any]("bang", "bangs head against wall", nil)
-	subCli := clim.New[any]("sub", "I am a subcommand", nil)
-	cli.AddCLI(subCli)
-
-	want := `bang -- bangs head against wall
-
-Usage: bang <command> [options]
-
-Commands:
-
- sub     I am a subcommand
-
-Options:
-
- -h, --help    Print this help and exit
-`
-	_, err := cli.Parse([]string{"-h"})
-
-	rosina.AssertErrorIs(t, err, clim.ErrHelp)
-	rosina.AssertDeepEqual(t, err.Error(), want, "error text")
-}
-
-func TestHelpSubCommandsGroup(t *testing.T) {
-	cli := clim.New[any]("bang", "bangs head against wall", nil)
-	subCliA := clim.New[any]("sub-A", "I am subcommand A", nil)
-	cli.AddCLI(subCliA)
-	subCliB := clim.New[any]("sub-B", "I am subcommand B", nil)
-	cli.AddCLI(subCliB)
-
-	cli.AddGroup("group 1", subCliA)
-	cli.AddGroup("group 2", subCliB)
-
-	want := `bang -- bangs head against wall
-
-Usage: bang <command> [options]
-
-available commands:
-
-group 1:
-
- sub-A     I am subcommand A
-
-group 2:
-
- sub-B     I am subcommand B
-
-Options:
-
- -h, --help    Print this help and exit
-`
-	_, err := cli.Parse([]string{"-h"})
-
-	rosina.AssertErrorIs(t, err, clim.ErrHelp)
-	rosina.AssertDeepEqual(t, err.Error(), want, "error text")
-}
 
 func TestVariableCanBeBoundOnlyOnce(t *testing.T) {
 	var count int
@@ -340,6 +174,30 @@ func TestCliNameCannotBeEmpty(t *testing.T) {
 		`clim.New: name cannot be empty`)
 }
 
+func TestActionMissing(t *testing.T) {
+	cli := clim.New[string]("basket", "juicy fruits", nil)
+	action, err := cli.Parse(nil)
+
+	rosina.AssertIsNil(t, err)
+	err = action("hello")
+	rosina.AssertErrorIs(t, err, clim.ErrParse)
+	rosina.AssertErrorContains(t, err, "basket: no action registered")
+}
+
+func TestActionPresent(t *testing.T) {
+	cli := clim.New[string]("basket", "juicy fruits",
+		func(uctx string) error { return errors.New(uctx) })
+
+	// In this simple case, it might be unclear why the indirection
+	// of passing through action. It becomes evident when using subcommands.
+	action, err := cli.Parse(nil)
+	rosina.AssertIsNil(t, err)
+
+	err = action("mango")
+	rosina.AssertIsNotNil(t, err)
+	rosina.AssertTextEqual(t, err.Error(), "mango", "action error message")
+}
+
 func TestParseOneFlagPairSuccess(t *testing.T) {
 	var count int
 	cli := clim.New[any]("basket", "juicy fruits", nil)
@@ -367,52 +225,6 @@ func TestParseOneFlagPairUnrecognized(t *testing.T) {
 
 	_, err = cli.Parse([]string{"-f"})
 	rosina.AssertErrorContains(t, err, `unrecognized flag "-f"`)
-}
-
-func TestPosArgs(t *testing.T) {
-	type testCase struct {
-		name string
-		args []string
-		want []string
-	}
-
-	test := func(t *testing.T, tc testCase) {
-		var count int
-		cli := clim.New[any]("basket", "juicy fruits", nil)
-		cli.AddFlag(&clim.Flag{Value: clim.Int(&count, 3), Long: "count"})
-
-		_, err := cli.Parse(tc.args)
-
-		rosina.AssertIsNil(t, err)
-		rosina.AssertDeepEqual(t, cli.PosArgs(), tc.want, "pos args")
-	}
-
-	testCases := []testCase{
-		{
-			name: "no positionals",
-			args: []string{"--count=42"},
-			want: []string{},
-		},
-		{
-			name: "vanilla",
-			args: []string{"--count=42", "a", "b"},
-			want: []string{"a", "b"},
-		},
-		{
-			name: "sneaky",
-			args: []string{"--count=42", "---a", "b"},
-			want: []string{"---a", "b"},
-		},
-		{
-			name: "after the first positional, a flag is not a flag",
-			args: []string{"--count=42", "a", "-b"},
-			want: []string{"a", "-b"},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) { test(t, tc) })
-	}
 }
 
 func TestRequiredIgnoresDefaultSuccess(t *testing.T) {

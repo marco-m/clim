@@ -6,8 +6,6 @@ import (
 	"regexp"
 	"slices"
 	"strings"
-
-	"golang.org/x/exp/maps"
 )
 
 // ActionFn is the function type of the "action" returned by a parser.
@@ -360,72 +358,6 @@ func (cli *CLI[T]) parseOne(args []string) (string, int, error) {
 	return long, 2, nil
 }
 
-func (cli *CLI[T]) usage() error {
-	var bld strings.Builder
-
-	// Calculate the max width of the first column of commands.
-	maxColWidth := 0
-	for _, p := range cli.subCLIs {
-		fmt.Fprintf(&bld, " %s", p.name)
-		maxColWidth = max(maxColWidth, bld.Len())
-		bld.Reset()
-	}
-
-	fmt.Fprintf(&bld, "%s -- %s\n\n", cli.rootToHere, cli.oneline)
-
-	if cli.description != "" {
-		for _, line := range strings.Split(cli.description, "\n") {
-			fmt.Fprintf(&bld, " %s\n", line)
-		}
-		fmt.Fprintln(&bld)
-	}
-
-	fmt.Fprintf(&bld, "Usage: %s ", cli.rootToHere)
-	if len(cli.subCLIs) > 0 {
-		fmt.Fprintf(&bld, "<command> ")
-	}
-	fmt.Fprintf(&bld, "[options]\n\n")
-
-	if cli.examples != "" {
-		fmt.Fprintf(&bld, "Examples:\n\n")
-		for _, line := range strings.Split(cli.examples, "\n") {
-			if line != "" {
-				fmt.Fprintf(&bld, " %s\n", line)
-			} else {
-				fmt.Fprintln(&bld)
-			}
-		}
-		fmt.Fprintln(&bld)
-	}
-
-	if len(cli.groups) > 0 {
-		fmt.Fprintf(&bld, "available commands:\n\n")
-	} else if len(cli.subCLIs) > 0 {
-		fmt.Fprintf(&bld, "Commands:\n\n")
-	}
-
-	const gutter = 4
-	width := maxColWidth + gutter
-
-	// Render the commands, per group.
-	if len(cli.groups) > 0 {
-		for _, group := range cli.groups {
-			fmt.Fprintf(&bld, "%s:\n\n", group.name)
-			for _, cmd := range group.clis {
-				fmt.Fprintf(&bld, " %-*s%s\n", width, cmd.name, cmd.oneline)
-			}
-			fmt.Fprintln(&bld)
-		}
-	} else if len(cli.subCLIs) > 0 {
-		for _, cmd := range cli.subCLIs {
-			fmt.Fprintf(&bld, " %-*s%s\n", width, cmd.name, cmd.oneline)
-		}
-		fmt.Fprintln(&bld)
-	}
-
-	return newHelpError("%s", bld.String()+cli.usageOptions())
-}
-
 // pathRootToNode returns the CLI names in the tree path from the root to
 // 'node'.
 // TODO write test and add this to all errors?
@@ -443,65 +375,9 @@ func pathRootToNode[T any](node *CLI[T]) []string {
 	return path
 }
 
-func (cli *CLI[T]) usageOptions() string {
-	// First pass. Sort keys.
-	longs := maps.Keys(cli.long2flag)
-	slices.Sort(longs)
-
-	// Second pass, calculate the max width of the first column.
-	lines := make([]string, 0, len(longs)+1)
-	var bld strings.Builder
-	maxColWidth := 0
-	for _, long := range longs {
-		flag := cli.long2flag[long]
-		fmt.Fprintf(&bld, " ")
-		if flag.Short != "" {
-			fmt.Fprintf(&bld, "-%s, ", flag.Short)
-		}
-		fmt.Fprintf(&bld, "--%s %s", flag.Long, flag.Label)
-		lines = append(lines, bld.String())
-		maxColWidth = max(maxColWidth, bld.Len())
-		bld.Reset()
-	}
-	// Same for -h
-	fmt.Fprint(&bld, " -h, --help")
-	maxColWidth = max(maxColWidth, bld.Len())
-	bld.Reset()
-
-	// Third pass, add the second column.
-	const gutter = 4
-	fmt.Fprintf(&bld, "Options:\n\n")
-	for i, long := range longs {
-		flag := cli.long2flag[long]
-		fmt.Fprintf(&bld, "%-*s%s", maxColWidth+gutter, lines[i], flag.Help)
-		if flag.defValue != "" && !flag.Required {
-			fmt.Fprintf(&bld, " (default: %s)", flag.defValue)
-		}
-		if flag.Required {
-			fmt.Fprintf(&bld, " (required)")
-		}
-		fmt.Fprintf(&bld, "\n")
-	}
-	if len(longs) > 0 {
-		fmt.Fprintf(&bld, "\n")
-	}
-
-	fmt.Fprintf(&bld, "%-*s%s", maxColWidth+gutter,
-		" -h, --help", "Print this help and exit\n")
-
-	if cli.footer != "" {
-		fmt.Fprintln(&bld)
-		for _, line := range strings.Split(cli.footer, "\n") {
-			fmt.Fprintf(&bld, " %s\n", line)
-		}
-	}
-
-	return bld.String()
-}
-
 func (cli *CLI[T]) run(uctx T) error {
 	if cli.action == nil {
-		return NewParseError("command '%s': no action registered", cli.name)
+		return NewParseError("%s: no action registered", cli.rootToHere)
 	}
 	return cli.action(uctx)
 }
