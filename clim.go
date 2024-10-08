@@ -46,6 +46,8 @@ type CLI[T any] struct {
 	footer      string
 	long2flag   map[string]*Flag
 	short2long  map[string]string
+	posargs     *[]string
+	pairs       []Pair
 	longSeen    map[string]struct{} // Options seen on the command-line
 	positionals []string
 	//
@@ -75,6 +77,7 @@ func New[T any](name string, oneline string, action ActionFn[T]) *CLI[T] {
 		action:     action,
 		long2flag:  make(map[string]*Flag),
 		short2long: make(map[string]string),
+		// name2posarg: make(map[string]*PosArg),
 		longSeen:   map[string]struct{}{},
 		rootToHere: name, // if child, overwritten by AddCLI.
 	}
@@ -179,6 +182,11 @@ func (cli *CLI[T]) AddFlag(flag *Flag) {
 
 // AddCLI adds child (which must be correctly setup) to this CLI.
 func (cli *CLI[T]) AddCLI(child *CLI[T]) *CLI[T] {
+	if cli.posargs != nil {
+		panic(fmt.Sprintf("%s: already have pos args; cannot have also subcommand %q",
+			cli.name, child.name))
+	}
+
 	for _, sc := range cli.subCLIs {
 		if child.name == sc.name {
 			// `banana: long flag name "count" already defined`
@@ -208,18 +216,13 @@ func (cli *CLI[T]) AddGroup(name string, clis ...*CLI[T]) {
 	cli.groups = append(cli.groups, cliGroup[T]{name, clis})
 }
 
-// PosArgs returns the positional arguments, if any.
-// Must be called after Parse.
-// WARNING will probably disappear, replaced by support for positional
-// arguments parsing.
-func (cmd *CLI[T]) PosArgs() []string {
-	return cmd.positionals
-}
-
-// Parse recursively processes args, calling the needed subCLI, and returns
-// the associated action.
+// Parse processes args, following subcommands (if any), and returns the
+// associated action.
 func (cli *CLI[T]) Parse(args []string) (ActionFn[T], error) {
 	index := 0
+
+	// Parse all the options. At the end of the loop, 'index' points to the
+	// beginning (if any) of the positional arguments.
 	for {
 		long, offset, err := cli.parseOne(args[index:])
 		if err != nil {
@@ -227,7 +230,7 @@ func (cli *CLI[T]) Parse(args []string) (ActionFn[T], error) {
 		}
 		cli.longSeen[long] = struct{}{}
 		if offset == 0 {
-			// Arrived at the end of args or at the end of the flags.
+			// Arrived at the end of the options.
 			break
 		}
 		index += offset
@@ -249,25 +252,82 @@ func (cli *CLI[T]) Parse(args []string) (ActionFn[T], error) {
 			strings.Join(missing, ", "))
 	}
 
+	//
+	// Process the remaining of args (if any).
+	//
+
 	cli.positionals = args[index:]
 
-	if len(cli.subCLIs) == 0 {
-		return cli.run, nil
+	if len(cli.subCLIs) > 0 && cli.posargs != nil {
+		return nil, fmt.Errorf(
+			"clim: internal error: command %q has both subcommands and pos args",
+			cli.rootToHere)
 	}
 
-	// If we are here, we have subcommands.
-
-	if len(cli.positionals) == 0 {
-		return nil, NewParseError("expected a command")
-	}
-	command := cli.positionals[0]
-	for _, p := range cli.subCLIs {
-		if p.name == command {
-			return p.Parse(cli.positionals[1:])
+	//
+	// Subcommand.
+	//
+	if len(cli.subCLIs) > 0 {
+		if len(cli.positionals) == 0 {
+			return nil, NewParseError("expected a command")
 		}
+		command := cli.positionals[0]
+		for _, p := range cli.subCLIs {
+			if p.name == command {
+				return p.Parse(cli.positionals[1:])
+			}
+		}
+		return nil, NewParseError("unrecognized command %q", command)
 	}
 
-	return nil, NewParseError("unrecognized command %q", command)
+	//
+	// Positional arguments.
+	//
+	if cli.posargs != nil {
+		*cli.posargs = cli.positionals
+	}
+
+	return cli.run, nil
+}
+
+type Pair struct {
+	Name string
+	Help string
+}
+
+func (cli *CLI[T]) AddPosArgs(values *[]string, pairs ...Pair) error {
+	if len(cli.subCLIs) > 0 {
+		// FIXME this is NOT a parse error!!!
+		return NewParseError("%s: already have subcommands; cannot have also pos args",
+			cli.name)
+	}
+
+	cli.posargs = values
+	cli.pairs = pairs
+	names := make(map[string]int, len(pairs))
+
+	for idx, pair := range pairs {
+		if idx2, found := names[pair.Name]; found {
+			return NewParseError(
+				"%s: pos arg at index %d (%q) was already defined at index %d",
+				cli.name, idx, pair.Name, idx2)
+		}
+		if pair.Name == "" {
+			return NewParseError("%s: pos arg at index %d (%q) cannot be empty",
+				cli.name, idx, pair.Name)
+		}
+
+		// A variable can be bound to only one flag.
+		// for k, fl := range cli.long2flag {
+		// 	if fl.Value == flag.Value {
+		// 		panic(fmt.Sprintf("long flag name %q: variable already bound to flag %q",
+		// 			flag.Long, k))
+		// 	}
+		// }
+
+		names[pair.Name] = idx
+	}
+	return nil
 }
 
 // CountTrue returns the number of args that are true.
@@ -281,6 +341,7 @@ func CountTrue(args ...bool) int {
 	return n
 }
 
+// regex to match an option on the command-line.
 // _                           0  1              2            34  5
 var flagRE = regexp.MustCompile(`^(?P<hyphens>-*)(?P<name>.*?)((=)(?P<value>.+))?$`)
 

@@ -10,7 +10,7 @@ import (
 
 func TestFoo(t *testing.T) {
 	want := `hello from FooCmd Run
-&main.fooCmd{soft:false}
+&main.fooCmd{soft:false, positionals:[]string{}}
 `
 	readReset := rosina.InterceptOutput(t, &os.Stdout)
 

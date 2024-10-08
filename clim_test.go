@@ -336,6 +336,20 @@ func TestSubCommandNamesMustBeUnique(t *testing.T) {
 		`bang: subcommand "sub" already defined`)
 }
 
+func TestCannotAddSubCommandAfterPosArgs(t *testing.T) {
+	cli := clim.New[any]("bang", "bang head", nil)
+
+	var positionals []string
+	err := cli.AddPosArgs(&positionals, clim.Pair{"NAME", "Name of the foos"})
+	rosina.AssertIsNil(t, err)
+
+	subCliA := clim.New[any]("sub", "I am a subcommand A", nil)
+	rosina.AssertPanicTextContains(t, func() {
+		cli.AddCLI(subCliA)
+	},
+		`bang: already have pos args; cannot have also subcommand "sub"`)
+}
+
 func TestAddGroupSuccess(t *testing.T) {
 	child := clim.New[any]("child", "I am a child", nil)
 	root := clim.New[any]("bang", "bang head", nil)

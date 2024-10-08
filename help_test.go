@@ -179,3 +179,61 @@ Options:
 	rosina.AssertErrorIs(t, err, clim.ErrHelp)
 	rosina.AssertDeepEqual(t, err.Error(), want, "error text")
 }
+
+func TestPosArgsRequiredHelpTake1(t *testing.T) {
+	want := `bang -- bang head
+
+Usage: bang [options] COUNT NAME COLOR...
+
+Options:
+
+ -h, --help    Print this help and exit
+
+Positional arguments:
+
+ COUNT         How many foos (required)
+ NAME          Name of the foos (required)
+ COLOR...      One or more colors (required)
+`
+
+	cli := clim.New[any]("bang", "bang head", nil)
+
+	var positionals []string
+	err := cli.AddPosArgs(&positionals,
+		clim.Pair{"COUNT", "How many foos (required)"},
+		clim.Pair{"NAME", "Name of the foos (required)"},
+		clim.Pair{"COLOR...", "One or more colors (required)"})
+	rosina.AssertIsNil(t, err)
+
+	_, err = cli.Parse([]string{"-h"})
+	rosina.AssertErrorIs(t, err, clim.ErrHelp)
+	rosina.AssertDeepEqual(t, err.Error(), want, "help message")
+}
+
+// func TestPosArgsSimpleHelp(t *testing.T) {
+// 	want := `bang -- bang head
+
+// Usage: bang [options] NAME COUNT
+
+// Options:
+
+//  -h, --help    Print this help and exit
+
+// Positional arguments:
+
+//  NAME       Name of the foos
+//  COUNT      How many foos
+// `
+// 	var foos string
+// 	cli := clim.New[any]("bang", "bang head", nil)
+// 	err := cli.AddPosArgs(&clim.PosArg{
+// 		Value: clim.String(&foos, ""),
+// 		Name:  "NAME", Help: "Name of the foos", Required: true,
+// 	})
+// 	rosina.AssertIsNil(t, err)
+
+// 	_, err = cli.Parse([]string{"-h"})
+
+// 	rosina.AssertErrorIs(t, err, clim.ErrHelp)
+// 	rosina.AssertDeepEqual(t, err.Error(), want, "help message")
+// }

@@ -31,7 +31,11 @@ func (cli *CLI[T]) usage() error {
 	if len(cli.subCLIs) > 0 {
 		fmt.Fprintf(&bld, "<command> ")
 	}
-	fmt.Fprintf(&bld, "[options]\n\n")
+	fmt.Fprintf(&bld, "[options]")
+	for _, pair := range cli.pairs {
+		fmt.Fprintf(&bld, " %s", pair.Name)
+	}
+	fmt.Fprintf(&bld, "\n\n")
 
 	if cli.examples != "" {
 		fmt.Fprintf(&bld, "Examples:\n\n")
@@ -64,7 +68,9 @@ func (cli *CLI[T]) usage() error {
 		printSomeSubCommands(&bld, width, cli.subCLIs)
 	}
 
-	cli.printUsageOptions(&bld)
+	cli.printOptions(&bld)
+
+	cli.printPosArgs(&bld)
 
 	if cli.footer != "" {
 		fmt.Fprintln(&bld)
@@ -76,7 +82,7 @@ func (cli *CLI[T]) usage() error {
 	return newHelpError("%s", bld.String())
 }
 
-func (cli *CLI[T]) printUsageOptions(bld *strings.Builder) {
+func (cli *CLI[T]) printOptions(bld *strings.Builder) {
 	// First pass. Sort keys.
 	longs := slices.Sorted(maps.Keys(cli.long2flag))
 
@@ -120,6 +126,26 @@ func (cli *CLI[T]) printUsageOptions(bld *strings.Builder) {
 
 	fmt.Fprintf(bld, "%-*s%s", maxColWidth+gutter,
 		" -h, --help", "Print this help and exit\n")
+}
+
+func (cli *CLI[T]) printPosArgs(bld *strings.Builder) {
+	if len(cli.pairs) == 0 {
+		return
+	}
+
+	// First pass, calculate the max width of the first column.
+	maxColWidth := 0
+	for _, pair := range cli.pairs {
+		maxColWidth = max(maxColWidth, len(pair.Name))
+	}
+
+	// Second pass, consider the second column.
+	fmt.Fprintln(bld)
+	const gutter = 6
+	fmt.Fprintf(bld, "Positional arguments:\n\n")
+	for _, pair := range cli.pairs {
+		fmt.Fprintf(bld, " %-*s%s\n", maxColWidth+gutter, pair.Name, pair.Help)
+	}
 }
 
 func printSomeSubCommands[T any](bld *strings.Builder, width int, subclis []*CLI[T]) {
