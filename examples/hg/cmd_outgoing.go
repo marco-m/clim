@@ -37,33 +37,42 @@ type outgoingCmd struct {
 	bookmarks   bool
 }
 
-func newOutgoingCLI() *clim.CLI[user] {
+func newOutgoingCLI(parent *clim.CLI[user]) (*clim.CLI[user], error) {
 	outgoingCmd := outgoingCmd{}
 
-	cli := clim.New("outgoing",
+	cli, err := clim.New("outgoing",
 		"show changesets not found in the destination",
 		outgoingCmd.Run)
+	if err != nil {
+		return nil, err
+	}
 
-	cli.AddFlag(&clim.Flag{
-		Value: clim.Bool(&outgoingCmd.force, false),
-		Short: "f", Long: "force",
-		Help: "run even when the destination is unrelated",
-	})
-	cli.AddFlag(&clim.Flag{
-		Value: clim.StringSlice(&outgoingCmd.rev, nil),
-		Short: "r", Long: "rev", Label: "REV[,REV,..]",
-		Help: "changeset(s) intended to be included in the destination",
-	})
-	cli.AddFlag(&clim.Flag{
-		Value: clim.Bool(&outgoingCmd.newestFirst, false),
-		Short: "n", Long: "newest-first", Help: "show newest record first",
-	})
-	cli.AddFlag(&clim.Flag{
-		Value: clim.Bool(&outgoingCmd.bookmarks, false),
-		Short: "B", Long: "bookmarks", Help: "compare bookmarks",
-	})
+	if err := cli.AddFlags(
+		&clim.Flag{
+			Value: clim.Bool(&outgoingCmd.force, false),
+			Short: "f", Long: "force",
+			Help: "run even when the destination is unrelated",
+		},
+		&clim.Flag{
+			Value: clim.StringSlice(&outgoingCmd.rev, nil),
+			Short: "r", Long: "rev", Label: "REV[,REV,..]",
+			Help: "changeset(s) intended to be included in the destination",
+		},
+		&clim.Flag{
+			Value: clim.Bool(&outgoingCmd.newestFirst, false),
+			Short: "n", Long: "newest-first", Help: "show newest record first",
+		},
+		&clim.Flag{
+			Value: clim.Bool(&outgoingCmd.bookmarks, false),
+			Short: "B", Long: "bookmarks", Help: "compare bookmarks",
+		}); err != nil {
+		return nil, err
+	}
 
-	return cli
+	if err := parent.AddCLI(cli); err != nil {
+		return nil, err
+	}
+	return cli, nil
 }
 
 func (cmd *outgoingCmd) Run(uctx user) error {

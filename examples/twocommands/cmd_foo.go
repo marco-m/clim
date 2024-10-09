@@ -14,12 +14,17 @@ type fooCmd struct {
 func newFooCLI(parent *clim.CLI[App]) error {
 	fooCmd := fooCmd{}
 
-	cli := clim.New("foo", "simple foos all day", fooCmd.Run)
+	cli, err := clim.New("foo", "simple foos all day", fooCmd.Run)
+	if err != nil {
+		return err
+	}
 
-	cli.AddFlag(&clim.Flag{
+	if err := cli.AddFlags(&clim.Flag{
 		Value: clim.Bool(&fooCmd.soft, false),
 		Long:  "soft", Help: "make softer foos",
-	})
+	}); err != nil {
+		return err
+	}
 
 	if err := cli.AddPosArgs(&fooCmd.positionals,
 		clim.Pair{"COUNT", "How many foos (required)"},

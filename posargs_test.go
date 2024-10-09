@@ -8,10 +8,11 @@ import (
 )
 
 func TestPosArgsRequiredSuccess(t *testing.T) {
-	cli := clim.New[any]("bang", "bang head", nil)
+	cli, err := clim.New[any]("bang", "bang head", nil)
+	rosina.AssertNoError(t, err)
 
 	var positionals []string
-	err := cli.AddPosArgs(&positionals,
+	err = cli.AddPosArgs(&positionals,
 		clim.Pair{"NAME", "Name of the foos (required)"},
 		clim.Pair{"COUNT", "How many foos (required)"})
 	rosina.AssertNoError(t, err)
@@ -24,13 +25,17 @@ func TestPosArgsRequiredSuccess(t *testing.T) {
 }
 
 func TestCannotAddPosArgAfterSubCommand(t *testing.T) {
-	cli := clim.New[any]("bang", "bang head", nil)
+	cli, err := clim.New[any]("bang", "bang head", nil)
+	rosina.AssertNoError(t, err)
 
-	subCliA := clim.New[any]("sub", "I am a subcommand A", nil)
-	cli.AddCLI(subCliA)
+	subCliA, err := clim.New[any]("sub", "I am a subcommand A", nil)
+	rosina.AssertNoError(t, err)
+
+	err = cli.AddCLI(subCliA)
+	rosina.AssertNoError(t, err)
 
 	var positionals []string
-	err := cli.AddPosArgs(&positionals, clim.Pair{"NAME", "Name of the foos"})
+	err = cli.AddPosArgs(&positionals, clim.Pair{"NAME", "Name of the foos"})
 	rosina.AssertErrorContains(t, err,
 		"bang: already have subcommands; cannot have also pos args")
 }
@@ -43,9 +48,11 @@ func TestAddPosArgFailure(t *testing.T) {
 	}
 
 	test := func(t *testing.T, tc testCase) {
-		cli := clim.New[any]("bang", "bang head", nil)
+		cli, err := clim.New[any]("bang", "bang head", nil)
+		rosina.AssertNoError(t, err)
+
 		var positionals []string
-		err := cli.AddPosArgs(&positionals, tc.pairs...)
+		err = cli.AddPosArgs(&positionals, tc.pairs...)
 		rosina.AssertErrorContains(t, err, tc.want)
 	}
 

@@ -33,12 +33,18 @@ type App struct {
 
 func mainErr(args []string) error {
 	app := App{}
-	cli := clim.New[App]("twocommands", "two simple commands, no groups", nil)
+	cli, err := clim.New[App]("twocommands", "two simple commands, no groups", nil)
+	if err != nil {
+		return err
+	}
 
-	cli.AddFlag(&clim.Flag{
-		Value: clim.Bool(&app.verbose, false),
-		Long:  "verbose", Help: "Be more verbose",
-	})
+	if err := cli.AddFlags(
+		&clim.Flag{
+			Value: clim.Bool(&app.verbose, false),
+			Long:  "verbose", Help: "Be more verbose",
+		}); err != nil {
+		return err
+	}
 
 	if err := newFooCLI(cli); err != nil {
 		return err

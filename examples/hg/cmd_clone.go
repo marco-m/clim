@@ -11,25 +11,34 @@ type cloneCmd struct {
 	updateRev string
 }
 
-func newCloneCLI() *clim.CLI[user] {
+func newCloneCLI(parent *clim.CLI[user]) (*clim.CLI[user], error) {
 	cloneCmd := cloneCmd{}
 
-	cli := clim.New("clone",
+	cli, err := clim.New("clone",
 		"make a copy of an existing repository",
 		cloneCmd.Run)
+	if err != nil {
+		return nil, err
+	}
 
-	cli.AddFlag(&clim.Flag{
-		Value: clim.Bool(&cloneCmd.noUpdate, false),
-		Short: "U", Long: "noupdate",
-		Help: "the clone will include an empty working directory (only a repository)",
-	})
-	cli.AddFlag(&clim.Flag{
-		Value: clim.String(&cloneCmd.updateRev, ""),
-		Short: "u", Long: "updaterev", Label: "REV",
-		Help: "revision, tag, or branch to check out",
-	})
+	if err := cli.AddFlags(
+		&clim.Flag{
+			Value: clim.Bool(&cloneCmd.noUpdate, false),
+			Short: "U", Long: "noupdate",
+			Help: "the clone will include an empty working directory (only a repository)",
+		},
+		&clim.Flag{
+			Value: clim.String(&cloneCmd.updateRev, ""),
+			Short: "u", Long: "updaterev", Label: "REV",
+			Help: "revision, tag, or branch to check out",
+		}); err != nil {
+		return nil, err
+	}
 
-	return cli
+	if err := parent.AddCLI(cli); err != nil {
+		return nil, err
+	}
+	return cli, nil
 }
 
 func (cmd *cloneCmd) Run(uctx user) error {

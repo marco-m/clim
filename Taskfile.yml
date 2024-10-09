@@ -25,6 +25,7 @@ tasks:
       - task: build
       - task: lint
       - task: check-coverage
+      - cmd: go mod tidy
 
   install:deps:
     desc: Install tool dependencies.

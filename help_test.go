@@ -14,27 +14,30 @@ func TestSimpleHelp(t *testing.T) {
 		dryRun bool
 	}
 	var args Args
-	cli := clim.New[any]("bang", "bangs head against wall", nil)
+	cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+	rosina.AssertNoError(t, err)
 
-	cli.AddFlag(&clim.Flag{
-		Value: clim.Int(&args.count, 3),
-		Short: "c",
-		Long:  "count",
-		Label: "N",
-		Help:  "How many times",
-	})
-	cli.AddFlag(&clim.Flag{
-		Value: clim.String(&args.wall, "cardboard"),
-		// Short is optional, here we don't set it.
-		Long: "wall",
-		// Default for Label: uppercase(Long)
-		Help: "Type of wall",
-	})
-	cli.AddFlag(&clim.Flag{
-		Value: clim.Bool(&args.dryRun, false),
-		Long:  "dry-run",
-		Help:  "Enable dry-run",
-	})
+	err = cli.AddFlags(
+		&clim.Flag{
+			Value: clim.Int(&args.count, 3),
+			Short: "c",
+			Long:  "count",
+			Label: "N",
+			Help:  "How many times",
+		},
+		&clim.Flag{
+			Value: clim.String(&args.wall, "cardboard"),
+			// Short is optional, here we don't set it.
+			Long: "wall",
+			// Default for Label: uppercase(Long)
+			Help: "Type of wall",
+		},
+		&clim.Flag{
+			Value: clim.Bool(&args.dryRun, false),
+			Long:  "dry-run",
+			Help:  "Enable dry-run",
+		})
+	rosina.AssertNoError(t, err)
 
 	want := `bang -- bangs head against wall
 
@@ -49,7 +52,7 @@ Options:
  -h, --help       Print this help and exit
 `
 
-	_, err := cli.Parse([]string{"-h"})
+	_, err = cli.Parse([]string{"-h"})
 
 	rosina.AssertErrorIs(t, err, clim.ErrHelp)
 	rosina.AssertErrorContains(t, err, want)
@@ -58,18 +61,23 @@ Options:
 func TestHelpOfRequiredFlag(t *testing.T) {
 	var count int
 	var level int
-	cli := clim.New[any]("bang", "bang head", nil)
-	cli.AddFlag(&clim.Flag{
-		// Default value with Required, will be ignored also in the help.
-		Value:    clim.Int(&count, 3),
-		Long:     "count",
-		Required: true,
-	})
-	cli.AddFlag(&clim.Flag{
-		// Default value without Required, normal handling.
-		Value: clim.Int(&level, 5),
-		Long:  "level",
-	})
+
+	cli, err := clim.New[any]("bang", "bang head", nil)
+	rosina.AssertNoError(t, err)
+
+	err = cli.AddFlags(
+		&clim.Flag{
+			// Default value with Required, will be ignored also in the help.
+			Value:    clim.Int(&count, 3),
+			Long:     "count",
+			Required: true,
+		},
+		&clim.Flag{
+			// Default value without Required, normal handling.
+			Value: clim.Int(&level, 5),
+			Long:  "level",
+		})
+	rosina.AssertNoError(t, err)
 
 	want := `bang -- bang head
 
@@ -83,7 +91,7 @@ Options:
  -h, --help       Print this help and exit
 `
 
-	_, err := cli.Parse([]string{"-h"})
+	_, err = cli.Parse([]string{"-h"})
 
 	rosina.AssertErrorIs(t, err, clim.ErrHelp)
 	rosina.AssertErrorContains(t, err, want)
@@ -109,7 +117,9 @@ Options:
  this is the footer
 `
 
-	cli := clim.New[any]("bang", "bang head", nil)
+	cli, err := clim.New[any]("bang", "bang head", nil)
+	rosina.AssertNoError(t, err)
+
 	cli.SetDescription("this is the description")
 	cli.SetExamples(`
 This is a multi-line example.
@@ -117,16 +127,21 @@ This is a multi-line example.
 This is the last line of the example.`)
 	cli.SetFooter("this is the footer")
 
-	_, err := cli.Parse([]string{"-h"})
+	_, err = cli.Parse([]string{"-h"})
 
 	rosina.AssertErrorIs(t, err, clim.ErrHelp)
 	rosina.AssertTextEqual(t, err.Error(), want, "help message")
 }
 
 func TestHelpSubCommands(t *testing.T) {
-	cli := clim.New[any]("bang", "bangs head against wall", nil)
-	subCli := clim.New[any]("sub", "I am a subcommand", nil)
-	cli.AddCLI(subCli)
+	cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+	rosina.AssertNoError(t, err)
+
+	subCli, err := clim.New[any]("sub", "I am a subcommand", nil)
+	rosina.AssertNoError(t, err)
+
+	err = cli.AddCLI(subCli)
+	rosina.AssertNoError(t, err)
 
 	want := `bang -- bangs head against wall
 
@@ -140,21 +155,33 @@ Options:
 
  -h, --help    Print this help and exit
 `
-	_, err := cli.Parse([]string{"-h"})
+	_, err = cli.Parse([]string{"-h"})
 
 	rosina.AssertErrorIs(t, err, clim.ErrHelp)
 	rosina.AssertDeepEqual(t, err.Error(), want, "error text")
 }
 
 func TestHelpSubCommandsGroup(t *testing.T) {
-	cli := clim.New[any]("bang", "bangs head against wall", nil)
-	subCliA := clim.New[any]("sub-A", "I am subcommand A", nil)
-	cli.AddCLI(subCliA)
-	subCliB := clim.New[any]("sub-B", "I am subcommand B", nil)
-	cli.AddCLI(subCliB)
+	cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+	rosina.AssertNoError(t, err)
 
-	cli.AddGroup("group 1", subCliA)
-	cli.AddGroup("group 2", subCliB)
+	subCliA, err := clim.New[any]("sub-A", "I am subcommand A", nil)
+	rosina.AssertNoError(t, err)
+
+	err = cli.AddCLI(subCliA)
+	rosina.AssertNoError(t, err)
+
+	subCliB, err := clim.New[any]("sub-B", "I am subcommand B", nil)
+	rosina.AssertNoError(t, err)
+
+	err = cli.AddCLI(subCliB)
+	rosina.AssertNoError(t, err)
+
+	err = cli.AddGroup("group 1", subCliA)
+	rosina.AssertNoError(t, err)
+
+	err = cli.AddGroup("group 2", subCliB)
+	rosina.AssertNoError(t, err)
 
 	want := `bang -- bangs head against wall
 
@@ -174,7 +201,7 @@ Options:
 
  -h, --help    Print this help and exit
 `
-	_, err := cli.Parse([]string{"-h"})
+	_, err = cli.Parse([]string{"-h"})
 
 	rosina.AssertErrorIs(t, err, clim.ErrHelp)
 	rosina.AssertDeepEqual(t, err.Error(), want, "error text")
@@ -196,10 +223,11 @@ Positional arguments:
  COLOR...      One or more colors (required)
 `
 
-	cli := clim.New[any]("bang", "bang head", nil)
+	cli, err := clim.New[any]("bang", "bang head", nil)
+	rosina.AssertNoError(t, err)
 
 	var positionals []string
-	err := cli.AddPosArgs(&positionals,
+	err = cli.AddPosArgs(&positionals,
 		clim.Pair{"COUNT", "How many foos (required)"},
 		clim.Pair{"NAME", "Name of the foos (required)"},
 		clim.Pair{"COLOR...", "One or more colors (required)"})

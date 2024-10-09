@@ -17,13 +17,16 @@ func TestParseIntSuccess(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var count int
-		cli := clim.New[any]("bang", "bangs head against wall", nil)
-		cli.AddFlag(&clim.Flag{
+		cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+		rosina.AssertNoError(t, err)
+
+		err = cli.AddFlags(&clim.Flag{
 			Value: clim.Int(&count, 3),
 			Short: "c", Long: "count",
 		})
+		rosina.AssertNoError(t, err)
 
-		_, err := cli.Parse(tc.args)
+		_, err = cli.Parse(tc.args)
 		rosina.AssertNoError(t, err)
 		rosina.AssertEqual(t, count, tc.want, "count")
 	}
@@ -65,13 +68,16 @@ func TestParseIntFailure(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var count int
-		cli := clim.New[any]("bang", "bangs head against wall", nil)
-		cli.AddFlag(&clim.Flag{
+		cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+		rosina.AssertNoError(t, err)
+
+		err = cli.AddFlags(&clim.Flag{
 			Value: clim.Int(&count, 3),
 			Short: "c", Long: "count",
 		})
+		rosina.AssertNoError(t, err)
 
-		_, err := cli.Parse(tc.args)
+		_, err = cli.Parse(tc.args)
 		rosina.AssertErrorIs(t, err, clim.ErrParse)
 		rosina.AssertErrorContains(t, err, tc.wantErr)
 	}
@@ -96,26 +102,32 @@ func TestParseIntFailure(t *testing.T) {
 
 func TestParseIntSliceSuccess(t *testing.T) {
 	var pippos []int
-	cli := clim.New[any]("bang", "bangs head against wall", nil)
-	cli.AddFlag(&clim.Flag{
+	cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+	rosina.AssertNoError(t, err)
+
+	err = cli.AddFlags(&clim.Flag{
 		Value: clim.IntSlice(&pippos, []int{10}),
 		Short: "p", Long: "pippos",
 	})
+	rosina.AssertNoError(t, err)
 
-	_, err := cli.Parse([]string{"--pippos=1,2,3"})
+	_, err = cli.Parse([]string{"--pippos=1,2,3"})
 	rosina.AssertNoError(t, err)
 	rosina.AssertDeepEqual(t, pippos, []int{1, 2, 3}, "pippos")
 }
 
 func TestParseIntSliceFailure(t *testing.T) {
 	var pippos []int
-	cli := clim.New[any]("bang", "bangs head against wall", nil)
-	cli.AddFlag(&clim.Flag{
+	cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+	rosina.AssertNoError(t, err)
+
+	err = cli.AddFlags(&clim.Flag{
 		Value: clim.IntSlice(&pippos, nil),
 		Short: "p", Long: "pippos",
 	})
+	rosina.AssertNoError(t, err)
 
-	_, err := cli.Parse([]string{"--pippos=a,b,c"})
+	_, err = cli.Parse([]string{"--pippos=a,b,c"})
 	rosina.AssertErrorIs(t, err, clim.ErrParse)
 	rosina.AssertErrorContains(t, err,
 		`setting "--pippos=a,b,c": could not parse "a" as int (strconv.Atoi: parsing "a": invalid syntax)`)
@@ -130,13 +142,16 @@ func TestParseString(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var fruit string
-		cli := clim.New[any]("bang", "bangs head against wall", nil)
-		cli.AddFlag(&clim.Flag{
+		cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+		rosina.AssertNoError(t, err)
+
+		err = cli.AddFlags(&clim.Flag{
 			Value: clim.String(&fruit, "banana"),
 			Short: "f", Long: "fruit",
 		})
+		rosina.AssertNoError(t, err)
 
-		_, err := cli.Parse(tc.args)
+		_, err = cli.Parse(tc.args)
 		rosina.AssertNoError(t, err)
 		rosina.AssertEqual(t, fruit, tc.want, "fruit")
 	}
@@ -171,13 +186,16 @@ func TestParseString(t *testing.T) {
 
 func TestParseStringSliceSuccess(t *testing.T) {
 	var mickeys []string
-	cli := clim.New[any]("bang", "bangs head against wall", nil)
-	cli.AddFlag(&clim.Flag{
+	cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+	rosina.AssertNoError(t, err)
+
+	err = cli.AddFlags(&clim.Flag{
 		Value: clim.StringSlice(&mickeys, []string{"x"}),
 		Short: "m", Long: "mickeys",
 	})
+	rosina.AssertNoError(t, err)
 
-	_, err := cli.Parse([]string{"--mickeys=a,b,c"})
+	_, err = cli.Parse([]string{"--mickeys=a,b,c"})
 	rosina.AssertNoError(t, err)
 	rosina.AssertDeepEqual(t, mickeys, []string{"a", "b", "c"}, "mickeys")
 }
@@ -191,13 +209,16 @@ func TestParseBoolSuccess(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var sliced bool
-		cli := clim.New[any]("bang", "bangs head against wall", nil)
-		cli.AddFlag(&clim.Flag{
+		cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+		rosina.AssertNoError(t, err)
+
+		err = cli.AddFlags(&clim.Flag{
 			Value: clim.Bool(&sliced, false),
 			Short: "s", Long: "sliced",
 		})
+		rosina.AssertNoError(t, err)
 
-		_, err := cli.Parse(tc.args)
+		_, err = cli.Parse(tc.args)
 		rosina.AssertNoError(t, err)
 		rosina.AssertEqual(t, sliced, tc.want, "sliced")
 	}
@@ -244,13 +265,16 @@ func TestParseBoolFailure(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var sliced bool
-		cli := clim.New[any]("bang", "bangs head against wall", nil)
-		cli.AddFlag(&clim.Flag{
+		cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+		rosina.AssertNoError(t, err)
+
+		err = cli.AddFlags(&clim.Flag{
 			Value: clim.Bool(&sliced, false),
 			Short: "s", Long: "sliced",
 		})
+		rosina.AssertNoError(t, err)
 
-		_, err := cli.Parse(tc.args)
+		_, err = cli.Parse(tc.args)
 		rosina.AssertErrorIs(t, err, clim.ErrParse)
 		rosina.AssertErrorContains(t, err, tc.wantErr)
 	}
@@ -270,26 +294,32 @@ func TestParseBoolFailure(t *testing.T) {
 
 func TestParseDurationSuccess(t *testing.T) {
 	var timeout time.Duration
-	cli := clim.New[any]("bang", "bangs head against wall", nil)
-	cli.AddFlag(&clim.Flag{
+	cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+	rosina.AssertNoError(t, err)
+
+	err = cli.AddFlags(&clim.Flag{
 		Value: clim.Duration(&timeout, 0),
 		Long:  "timeout",
 	})
+	rosina.AssertNoError(t, err)
 
-	_, err := cli.Parse([]string{"--timeout=32m4ms"})
+	_, err = cli.Parse([]string{"--timeout=32m4ms"})
 	rosina.AssertNoError(t, err)
 	rosina.AssertEqual(t, timeout, 32*time.Minute+4*time.Millisecond, "timeout")
 }
 
 func TestParseDurationFailure(t *testing.T) {
 	var timeout time.Duration
-	cli := clim.New[any]("bang", "bangs head against wall", nil)
-	cli.AddFlag(&clim.Flag{
+	cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+	rosina.AssertNoError(t, err)
+
+	err = cli.AddFlags(&clim.Flag{
 		Value: clim.Duration(&timeout, 0),
 		Long:  "timeout",
 	})
+	rosina.AssertNoError(t, err)
 
-	_, err := cli.Parse([]string{"--timeout=78"})
+	_, err = cli.Parse([]string{"--timeout=78"})
 	rosina.AssertErrorIs(t, err, clim.ErrParse)
 	rosina.AssertErrorContains(t, err,
 		`setting "--timeout=78": time: missing unit in duration "78"`)

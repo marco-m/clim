@@ -67,9 +67,9 @@ type cliGroup[T any] struct {
 // and sets action, to be returned by a successful parse.
 // 'oneline' is the one line description.
 // See [CLI.AddCLI] to add a sub CLI (subcommand).
-func New[T any](name string, oneline string, action ActionFn[T]) *CLI[T] {
+func New[T any](name string, oneline string, action ActionFn[T]) (*CLI[T], error) {
 	if name == "" {
-		panic("clim.New: name cannot be empty")
+		return nil, NewParseError("clim.New: name cannot be empty")
 	}
 	return &CLI[T]{
 		name:       name,
@@ -80,7 +80,7 @@ func New[T any](name string, oneline string, action ActionFn[T]) *CLI[T] {
 		// name2posarg: make(map[string]*PosArg),
 		longSeen:   map[string]struct{}{},
 		rootToHere: name, // if child, overwritten by AddCLI.
-	}
+	}, nil
 }
 
 func (cli *CLI[T]) SetDescription(desc string) {
@@ -108,34 +108,48 @@ type Flag struct {
 	defValue string // Default value, for usage message. Taken from Value.
 }
 
-// AddFlag adds a [Flag] to cli.
-// The type and value of the flag are represented by the field [Flag.Value],
+// AddFlags adds 'flags' to cli.
+// The type and value of each flag are represented by the field [Flag.Value],
 // which holds either one of the implementation of [Value] from the clim package
 // (e.g. [Int], [IntSlice], [Bool], ...) or a user-defined one.
 //
 // Taken from std/flag and adapted.
-func (cli *CLI[T]) AddFlag(flag *Flag) {
+func (cli *CLI[T]) AddFlags(flags ...*Flag) error {
+	if len(cli.long2flag) > 0 {
+		return NewParseError("cannot call AddFlags more than once")
+	}
+	for _, f := range flags {
+		if err := cli.addFlag(f); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (cli *CLI[T]) addFlag(flag *Flag) error {
 	//
 	// Validate the short flag.
 	//
 	if flag.Short != "" {
 		if strings.HasPrefix(flag.Short, "-") {
-			panic("short flag name must not begin with '-'")
+			return NewParseError("short flag name must not begin with '-'")
 		}
 		if strings.Contains(flag.Short, "=") {
-			panic("short flag name must not contain '='")
+			return NewParseError("short flag name must not contain '='")
 		}
 
 		// short can be empty.
 
 		if len(flag.Short) > 1 {
-			panic(fmt.Sprintf("short flag name %q must be exactly 1 character", flag.Short))
+			return NewParseError("short flag name %q must be exactly 1 character",
+				flag.Short)
 		}
 		if flag.Short == "h" {
-			panic(`cannot override short flag name "h"`)
+			return NewParseError(`cannot override short flag name "h"`)
 		}
 		if _, found := cli.short2long[flag.Short]; found {
-			panic(fmt.Sprintf("%s: short flag name %q already defined", cli.name, flag.Short))
+			return NewParseError("%s: short flag name %q already defined",
+				cli.name, flag.Short)
 		}
 	}
 
@@ -143,29 +157,32 @@ func (cli *CLI[T]) AddFlag(flag *Flag) {
 	// Validate the long flag.
 	//
 	if strings.HasPrefix(flag.Long, "-") {
-		panic(fmt.Sprintf("long flag name %q must not begin with '-'", flag.Long))
+		return NewParseError("long flag name %q must not begin with '-'", flag.Long)
 	}
 	if strings.Contains(flag.Long, "=") {
-		panic(fmt.Sprintf("long flag name %q must not contain '='", flag.Long))
+		return NewParseError("long flag name %q must not contain '='", flag.Long)
 	}
 	if flag.Long == "" {
-		panic("long flag name cannot be empty")
+		return NewParseError("long flag name cannot be empty")
 	}
 	if len(flag.Long) < 2 {
-		panic(fmt.Sprintf("long flag name %q must be at least 2 characters", flag.Long))
+		return NewParseError("long flag name %q must be at least 2 characters",
+			flag.Long)
 	}
 	if flag.Long == "help" {
-		panic(`cannot override long flag name "help"`)
+		return NewParseError(`cannot override long flag name "help"`)
 	}
 	if _, found := cli.long2flag[flag.Long]; found {
-		panic(fmt.Sprintf("%s: long flag name %q already defined", cli.name, flag.Long))
+		return NewParseError("%s: long flag name %q already defined",
+			cli.name, flag.Long)
 	}
 
 	// A variable can be bound to only one flag.
 	for k, fl := range cli.long2flag {
 		if fl.Value == flag.Value {
-			panic(fmt.Sprintf("long flag name %q: variable already bound to flag %q",
-				flag.Long, k))
+			return NewParseError(
+				"long flag name %q: variable already bound to flag %q",
+				flag.Long, k)
 		}
 	}
 
@@ -178,42 +195,45 @@ func (cli *CLI[T]) AddFlag(flag *Flag) {
 		cli.short2long[flag.Short] = flag.Long
 	}
 	cli.long2flag[flag.Long] = flag
+
+	return nil
 }
 
-// AddCLI adds child (which must be correctly setup) to this CLI.
-func (cli *CLI[T]) AddCLI(child *CLI[T]) *CLI[T] {
+// AddCLI adds 'child' (which must be correctly setup) to this CLI.
+// It returns 'child' itself.
+func (cli *CLI[T]) AddCLI(child *CLI[T]) error {
 	if cli.posargs != nil {
-		panic(fmt.Sprintf("%s: already have pos args; cannot have also subcommand %q",
-			cli.name, child.name))
+		return NewParseError(
+			"%s: already have pos args; cannot have also subcommand %q",
+			cli.name, child.name)
 	}
 
 	for _, sc := range cli.subCLIs {
 		if child.name == sc.name {
 			// `banana: long flag name "count" already defined`
-			panic(fmt.Sprintf("%s: subcommand %q already defined",
-				cli.rootToHere, child.name))
+			return NewParseError("%s: subcommand %q already defined",
+				cli.rootToHere, child.name)
 		}
 	}
 	child.parent = cli
 	child.rootToHere = strings.Join(pathRootToNode(child), " ")
 	cli.subCLIs = append(cli.subCLIs, child)
-	return child
+	return nil
 }
 
 // AddGroup adds the subclis to the group name.
-func (cli *CLI[T]) AddGroup(name string, clis ...*CLI[T]) {
+func (cli *CLI[T]) AddGroup(name string, clis ...*CLI[T]) error {
 	if len(clis) == 0 {
-		msg := fmt.Sprintf("AddGroup %s: child list is empty", name)
-		panic(msg)
+		return NewParseError("AddGroup %s: child list is empty", name)
 	}
 	for _, child := range clis {
 		if !slices.Contains(cli.subCLIs, child) {
-			msg := fmt.Sprintf("AddGroup %s: child %s is missing previous AddCLI",
+			return NewParseError("AddGroup %s: child %s is missing previous AddCLI",
 				name, child.name)
-			panic(msg)
 		}
 	}
 	cli.groups = append(cli.groups, cliGroup[T]{name, clis})
+	return nil
 }
 
 // Parse processes args, following subcommands (if any), and returns the
@@ -320,7 +340,7 @@ func (cli *CLI[T]) AddPosArgs(values *[]string, pairs ...Pair) error {
 		// A variable can be bound to only one flag.
 		// for k, fl := range cli.long2flag {
 		// 	if fl.Value == flag.Value {
-		// 		panic(fmt.Sprintf("long flag name %q: variable already bound to flag %q",
+		// 		return NewParseError"long flag name %q: variable already bound to flag %q",
 		// 			flag.Long, k))
 		// 	}
 		// }
