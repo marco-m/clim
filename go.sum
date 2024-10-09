@@ -1,7 +1,7 @@
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
-github.com/marco-m/rosina v0.0.2 h1:swUJSjSv0WUSsL+Md/xVuP8/ia3a9tg023v+G693hek=
-github.com/marco-m/rosina v0.0.2/go.mod h1:XnMWRFIR8GztNE0mRL7b3B+E6r7cL5bpq48TRmtDmjw=
+github.com/marco-m/rosina v0.0.4 h1:3UDsbUbH14oMBeRNNEGr10XGVlOyfLI1fHL5I5DlofU=
+github.com/marco-m/rosina v0.0.4/go.mod h1:XnMWRFIR8GztNE0mRL7b3B+E6r7cL5bpq48TRmtDmjw=
 github.com/rogpeppe/go-internal v1.12.0 h1:exVL4IDcn6na9z1rAb56Vxr+CgyK3nn3O+epU5NdKM8=
 github.com/rogpeppe/go-internal v1.12.0/go.mod h1:E+RYuTGaKKdloAfM02xzb0FW3Paa99yedzYV+kq4uf4=
 golang.org/x/sys v0.23.0 h1:YfKFowiIMvtgl1UERQoTPPToxltDeZfbj4H7dVUCwmM=

@@ -14,10 +14,10 @@ func TestPosArgsRequiredSuccess(t *testing.T) {
 	err := cli.AddPosArgs(&positionals,
 		clim.Pair{"NAME", "Name of the foos (required)"},
 		clim.Pair{"COUNT", "How many foos (required)"})
-	rosina.AssertIsNil(t, err)
+	rosina.AssertNoError(t, err)
 
 	_, err = cli.Parse([]string{"mangos", "7"})
-	rosina.AssertIsNil(t, err)
+	rosina.AssertNoError(t, err)
 	// Yes, the first implementation is almost cheating.
 	want := []string{"mangos", "7"}
 	rosina.AssertDeepEqual(t, positionals, want, "positionals")
@@ -31,10 +31,8 @@ func TestCannotAddPosArgAfterSubCommand(t *testing.T) {
 
 	var positionals []string
 	err := cli.AddPosArgs(&positionals, clim.Pair{"NAME", "Name of the foos"})
-	rosina.AssertIsNotNil(t, err)
-	rosina.AssertEqual(t, err.Error(),
-		"bang: already have subcommands; cannot have also pos args",
-		"error message")
+	rosina.AssertErrorContains(t, err,
+		"bang: already have subcommands; cannot have also pos args")
 }
 
 func TestAddPosArgFailure(t *testing.T) {
@@ -48,8 +46,7 @@ func TestAddPosArgFailure(t *testing.T) {
 		cli := clim.New[any]("bang", "bang head", nil)
 		var positionals []string
 		err := cli.AddPosArgs(&positionals, tc.pairs...)
-		rosina.AssertIsNotNil(t, err)
-		rosina.AssertEqual(t, err.Error(), tc.want, "error message")
+		rosina.AssertErrorContains(t, err, tc.want)
 	}
 
 	testCases := []testCase{

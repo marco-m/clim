@@ -178,7 +178,7 @@ func TestActionMissing(t *testing.T) {
 	cli := clim.New[string]("basket", "juicy fruits", nil)
 	action, err := cli.Parse(nil)
 
-	rosina.AssertIsNil(t, err)
+	rosina.AssertNoError(t, err)
 	err = action("hello")
 	rosina.AssertErrorIs(t, err, clim.ErrParse)
 	rosina.AssertErrorContains(t, err, "basket: no action registered")
@@ -191,11 +191,10 @@ func TestActionPresent(t *testing.T) {
 	// In this simple case, it might be unclear why the indirection
 	// of passing through action. It becomes evident when using subcommands.
 	action, err := cli.Parse(nil)
-	rosina.AssertIsNil(t, err)
+	rosina.AssertNoError(t, err)
 
 	err = action("mango")
-	rosina.AssertIsNotNil(t, err)
-	rosina.AssertTextEqual(t, err.Error(), "mango", "action error message")
+	rosina.AssertErrorContains(t, err, "mango")
 }
 
 func TestParseOneFlagPairSuccess(t *testing.T) {
@@ -205,7 +204,7 @@ func TestParseOneFlagPairSuccess(t *testing.T) {
 
 	_, err := cli.Parse([]string{"--count", "42"})
 
-	rosina.AssertIsNil(t, err)
+	rosina.AssertNoError(t, err)
 	rosina.AssertEqual(t, count, 42, "count")
 }
 
@@ -245,7 +244,7 @@ func TestRequiredIgnoresDefaultSuccess(t *testing.T) {
 
 	_, err := cli.Parse([]string{"--count=1"})
 
-	rosina.AssertIsNil(t, err)
+	rosina.AssertNoError(t, err)
 	rosina.AssertEqual(t, count, 1, "count (parsed)")
 	rosina.AssertEqual(t, level, 5, "level (default value)")
 }
@@ -341,7 +340,7 @@ func TestCannotAddSubCommandAfterPosArgs(t *testing.T) {
 
 	var positionals []string
 	err := cli.AddPosArgs(&positionals, clim.Pair{"NAME", "Name of the foos"})
-	rosina.AssertIsNil(t, err)
+	rosina.AssertNoError(t, err)
 
 	subCliA := clim.New[any]("sub", "I am a subcommand A", nil)
 	rosina.AssertPanicTextContains(t, func() {

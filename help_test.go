@@ -203,7 +203,7 @@ Positional arguments:
 		clim.Pair{"COUNT", "How many foos (required)"},
 		clim.Pair{"NAME", "Name of the foos (required)"},
 		clim.Pair{"COLOR...", "One or more colors (required)"})
-	rosina.AssertIsNil(t, err)
+	rosina.AssertNoError(t, err)
 
 	_, err = cli.Parse([]string{"-h"})
 	rosina.AssertErrorIs(t, err, clim.ErrHelp)
@@ -230,7 +230,7 @@ Positional arguments:
 // 		Value: clim.String(&foos, ""),
 // 		Name:  "NAME", Help: "Name of the foos", Required: true,
 // 	})
-// 	rosina.AssertIsNil(t, err)
+// 	rosina.AssertNoError(t, err)
 
 // 	_, err = cli.Parse([]string{"-h"})
 

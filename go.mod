@@ -3,7 +3,7 @@ module github.com/marco-m/clim
 go 1.23.0
 
 require (
-	github.com/marco-m/rosina v0.0.2
+	github.com/marco-m/rosina v0.0.4
 	github.com/rogpeppe/go-internal v1.12.0
 )
 

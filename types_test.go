@@ -24,7 +24,7 @@ func TestParseIntSuccess(t *testing.T) {
 		})
 
 		_, err := cli.Parse(tc.args)
-		rosina.AssertIsNil(t, err)
+		rosina.AssertNoError(t, err)
 		rosina.AssertEqual(t, count, tc.want, "count")
 	}
 
@@ -103,7 +103,7 @@ func TestParseIntSliceSuccess(t *testing.T) {
 	})
 
 	_, err := cli.Parse([]string{"--pippos=1,2,3"})
-	rosina.AssertIsNil(t, err)
+	rosina.AssertNoError(t, err)
 	rosina.AssertDeepEqual(t, pippos, []int{1, 2, 3}, "pippos")
 }
 
@@ -137,7 +137,7 @@ func TestParseString(t *testing.T) {
 		})
 
 		_, err := cli.Parse(tc.args)
-		rosina.AssertIsNil(t, err)
+		rosina.AssertNoError(t, err)
 		rosina.AssertEqual(t, fruit, tc.want, "fruit")
 	}
 
@@ -178,7 +178,7 @@ func TestParseStringSliceSuccess(t *testing.T) {
 	})
 
 	_, err := cli.Parse([]string{"--mickeys=a,b,c"})
-	rosina.AssertIsNil(t, err)
+	rosina.AssertNoError(t, err)
 	rosina.AssertDeepEqual(t, mickeys, []string{"a", "b", "c"}, "mickeys")
 }
 
@@ -198,7 +198,7 @@ func TestParseBoolSuccess(t *testing.T) {
 		})
 
 		_, err := cli.Parse(tc.args)
-		rosina.AssertIsNil(t, err)
+		rosina.AssertNoError(t, err)
 		rosina.AssertEqual(t, sliced, tc.want, "sliced")
 	}
 
@@ -277,7 +277,7 @@ func TestParseDurationSuccess(t *testing.T) {
 	})
 
 	_, err := cli.Parse([]string{"--timeout=32m4ms"})
-	rosina.AssertIsNil(t, err)
+	rosina.AssertNoError(t, err)
 	rosina.AssertEqual(t, timeout, 32*time.Minute+4*time.Millisecond, "timeout")
 }
 
