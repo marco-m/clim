@@ -27,24 +27,33 @@ type initCmd struct {
 	mq        bool
 }
 
-func newInitCLI() *clim.CLI[user] {
+func newInitCLI(parent *clim.CLI[user]) (*clim.CLI[user], error) {
 	initCmd := initCmd{}
 
-	cli := clim.New("init",
+	cli, err := clim.New("init",
 		"create a new repository in the given directory",
 		initCmd.Run)
+	if err != nil {
+		return nil, err
+	}
 
-	cli.AddFlag(&clim.Flag{
-		Value: clim.String(&initCmd.remoteCmd, ""),
-		Long:  "remotecmd", Label: "CMD",
-		Help: "specify hg command to run on the remote side",
-	})
-	cli.AddFlag(&clim.Flag{
-		Value: clim.Bool(&initCmd.mq, false),
-		Long:  "mq", Help: "operate on patch repository",
-	})
+	if err := cli.AddFlags(
+		&clim.Flag{
+			Value: clim.String(&initCmd.remoteCmd, ""),
+			Long:  "remotecmd", Label: "CMD",
+			Help: "specify hg command to run on the remote side",
+		},
+		&clim.Flag{
+			Value: clim.Bool(&initCmd.mq, false),
+			Long:  "mq", Help: "operate on patch repository",
+		}); err != nil {
+		return nil, err
+	}
 
-	return cli
+	if err := parent.AddCLI(cli); err != nil {
+		return nil, err
+	}
+	return cli, nil
 }
 
 func (cmd *initCmd) Run(uctx user) error {

@@ -6,8 +6,6 @@ import (
 	"regexp"
 	"slices"
 	"strings"
-
-	"golang.org/x/exp/maps"
 )
 
 // ActionFn is the function type of the "action" returned by a parser.
@@ -48,6 +46,8 @@ type CLI[T any] struct {
 	footer      string
 	long2flag   map[string]*Flag
 	short2long  map[string]string
+	posargs     *[]string
+	pairs       []Pair
 	longSeen    map[string]struct{} // Options seen on the command-line
 	positionals []string
 	//
@@ -67,9 +67,9 @@ type cliGroup[T any] struct {
 // and sets action, to be returned by a successful parse.
 // 'oneline' is the one line description.
 // See [CLI.AddCLI] to add a sub CLI (subcommand).
-func New[T any](name string, oneline string, action ActionFn[T]) *CLI[T] {
+func New[T any](name string, oneline string, action ActionFn[T]) (*CLI[T], error) {
 	if name == "" {
-		panic("clim.New: name cannot be empty")
+		return nil, NewParseError("clim.New: name cannot be empty")
 	}
 	return &CLI[T]{
 		name:       name,
@@ -77,9 +77,10 @@ func New[T any](name string, oneline string, action ActionFn[T]) *CLI[T] {
 		action:     action,
 		long2flag:  make(map[string]*Flag),
 		short2long: make(map[string]string),
+		// name2posarg: make(map[string]*PosArg),
 		longSeen:   map[string]struct{}{},
 		rootToHere: name, // if child, overwritten by AddCLI.
-	}
+	}, nil
 }
 
 func (cli *CLI[T]) SetDescription(desc string) {
@@ -107,34 +108,48 @@ type Flag struct {
 	defValue string // Default value, for usage message. Taken from Value.
 }
 
-// AddFlag adds a [Flag] to cli.
-// The type and value of the flag are represented by the field [Flag.Value],
+// AddFlags adds 'flags' to cli.
+// The type and value of each flag are represented by the field [Flag.Value],
 // which holds either one of the implementation of [Value] from the clim package
 // (e.g. [Int], [IntSlice], [Bool], ...) or a user-defined one.
 //
 // Taken from std/flag and adapted.
-func (cli *CLI[T]) AddFlag(flag *Flag) {
+func (cli *CLI[T]) AddFlags(flags ...*Flag) error {
+	if len(cli.long2flag) > 0 {
+		return NewParseError("cannot call AddFlags more than once")
+	}
+	for _, f := range flags {
+		if err := cli.addFlag(f); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (cli *CLI[T]) addFlag(flag *Flag) error {
 	//
 	// Validate the short flag.
 	//
 	if flag.Short != "" {
 		if strings.HasPrefix(flag.Short, "-") {
-			panic("short flag name must not begin with '-'")
+			return NewParseError("short flag name must not begin with '-'")
 		}
 		if strings.Contains(flag.Short, "=") {
-			panic("short flag name must not contain '='")
+			return NewParseError("short flag name must not contain '='")
 		}
 
 		// short can be empty.
 
 		if len(flag.Short) > 1 {
-			panic(fmt.Sprintf("short flag name %q must be exactly 1 character", flag.Short))
+			return NewParseError("short flag name %q must be exactly 1 character",
+				flag.Short)
 		}
 		if flag.Short == "h" {
-			panic(`cannot override short flag name "h"`)
+			return NewParseError(`cannot override short flag name "h"`)
 		}
 		if _, found := cli.short2long[flag.Short]; found {
-			panic(fmt.Sprintf("%s: short flag name %q already defined", cli.name, flag.Short))
+			return NewParseError("%s: short flag name %q already defined",
+				cli.name, flag.Short)
 		}
 	}
 
@@ -142,29 +157,32 @@ func (cli *CLI[T]) AddFlag(flag *Flag) {
 	// Validate the long flag.
 	//
 	if strings.HasPrefix(flag.Long, "-") {
-		panic(fmt.Sprintf("long flag name %q must not begin with '-'", flag.Long))
+		return NewParseError("long flag name %q must not begin with '-'", flag.Long)
 	}
 	if strings.Contains(flag.Long, "=") {
-		panic(fmt.Sprintf("long flag name %q must not contain '='", flag.Long))
+		return NewParseError("long flag name %q must not contain '='", flag.Long)
 	}
 	if flag.Long == "" {
-		panic("long flag name cannot be empty")
+		return NewParseError("long flag name cannot be empty")
 	}
 	if len(flag.Long) < 2 {
-		panic(fmt.Sprintf("long flag name %q must be at least 2 characters", flag.Long))
+		return NewParseError("long flag name %q must be at least 2 characters",
+			flag.Long)
 	}
 	if flag.Long == "help" {
-		panic(`cannot override long flag name "help"`)
+		return NewParseError(`cannot override long flag name "help"`)
 	}
 	if _, found := cli.long2flag[flag.Long]; found {
-		panic(fmt.Sprintf("%s: long flag name %q already defined", cli.name, flag.Long))
+		return NewParseError("%s: long flag name %q already defined",
+			cli.name, flag.Long)
 	}
 
 	// A variable can be bound to only one flag.
 	for k, fl := range cli.long2flag {
 		if fl.Value == flag.Value {
-			panic(fmt.Sprintf("long flag name %q: variable already bound to flag %q",
-				flag.Long, k))
+			return NewParseError(
+				"long flag name %q: variable already bound to flag %q",
+				flag.Long, k)
 		}
 	}
 
@@ -177,51 +195,54 @@ func (cli *CLI[T]) AddFlag(flag *Flag) {
 		cli.short2long[flag.Short] = flag.Long
 	}
 	cli.long2flag[flag.Long] = flag
+
+	return nil
 }
 
-// AddCLI adds child (which must be correctly setup) to this CLI.
-func (cli *CLI[T]) AddCLI(child *CLI[T]) *CLI[T] {
+// AddCLI adds 'child' (which must be correctly setup) to this CLI.
+// It returns 'child' itself.
+func (cli *CLI[T]) AddCLI(child *CLI[T]) error {
+	if cli.posargs != nil {
+		return NewParseError(
+			"%s: already have pos args; cannot have also subcommand %q",
+			cli.name, child.name)
+	}
+
 	for _, sc := range cli.subCLIs {
 		if child.name == sc.name {
 			// `banana: long flag name "count" already defined`
-			panic(fmt.Sprintf("%s: subcommand %q already defined",
-				cli.rootToHere, child.name))
+			return NewParseError("%s: subcommand %q already defined",
+				cli.rootToHere, child.name)
 		}
 	}
 	child.parent = cli
 	child.rootToHere = strings.Join(pathRootToNode(child), " ")
 	cli.subCLIs = append(cli.subCLIs, child)
-	return child
+	return nil
 }
 
 // AddGroup adds the subclis to the group name.
-func (cli *CLI[T]) AddGroup(name string, clis ...*CLI[T]) {
+func (cli *CLI[T]) AddGroup(name string, clis ...*CLI[T]) error {
 	if len(clis) == 0 {
-		msg := fmt.Sprintf("AddGroup %s: child list is empty", name)
-		panic(msg)
+		return NewParseError("AddGroup %s: child list is empty", name)
 	}
 	for _, child := range clis {
 		if !slices.Contains(cli.subCLIs, child) {
-			msg := fmt.Sprintf("AddGroup %s: child %s is missing previous AddCLI",
+			return NewParseError("AddGroup %s: child %s is missing previous AddCLI",
 				name, child.name)
-			panic(msg)
 		}
 	}
 	cli.groups = append(cli.groups, cliGroup[T]{name, clis})
+	return nil
 }
 
-// PosArgs returns the positional arguments, if any.
-// Must be called after Parse.
-// WARNING will probably disappear, replaced by support for positional
-// arguments parsing.
-func (cmd *CLI[T]) PosArgs() []string {
-	return cmd.positionals
-}
-
-// Parse recursively processes args, calling the needed subCLI, and returns
-// the associated action.
+// Parse processes args, following subcommands (if any), and returns the
+// associated action.
 func (cli *CLI[T]) Parse(args []string) (ActionFn[T], error) {
 	index := 0
+
+	// Parse all the options. At the end of the loop, 'index' points to the
+	// beginning (if any) of the positional arguments.
 	for {
 		long, offset, err := cli.parseOne(args[index:])
 		if err != nil {
@@ -229,7 +250,7 @@ func (cli *CLI[T]) Parse(args []string) (ActionFn[T], error) {
 		}
 		cli.longSeen[long] = struct{}{}
 		if offset == 0 {
-			// Arrived at the end of args or at the end of the flags.
+			// Arrived at the end of the options.
 			break
 		}
 		index += offset
@@ -251,25 +272,82 @@ func (cli *CLI[T]) Parse(args []string) (ActionFn[T], error) {
 			strings.Join(missing, ", "))
 	}
 
+	//
+	// Process the remaining of args (if any).
+	//
+
 	cli.positionals = args[index:]
 
-	if len(cli.subCLIs) == 0 {
-		return cli.run, nil
+	if len(cli.subCLIs) > 0 && cli.posargs != nil {
+		return nil, fmt.Errorf(
+			"clim: internal error: command %q has both subcommands and pos args",
+			cli.rootToHere)
 	}
 
-	// If we are here, we have subcommands.
-
-	if len(cli.positionals) == 0 {
-		return nil, NewParseError("expected a command")
-	}
-	command := cli.positionals[0]
-	for _, p := range cli.subCLIs {
-		if p.name == command {
-			return p.Parse(cli.positionals[1:])
+	//
+	// Subcommand.
+	//
+	if len(cli.subCLIs) > 0 {
+		if len(cli.positionals) == 0 {
+			return nil, NewParseError("expected a command")
 		}
+		command := cli.positionals[0]
+		for _, p := range cli.subCLIs {
+			if p.name == command {
+				return p.Parse(cli.positionals[1:])
+			}
+		}
+		return nil, NewParseError("unrecognized command %q", command)
 	}
 
-	return nil, NewParseError("unrecognized command %q", command)
+	//
+	// Positional arguments.
+	//
+	if cli.posargs != nil {
+		*cli.posargs = cli.positionals
+	}
+
+	return cli.run, nil
+}
+
+type Pair struct {
+	Name string
+	Help string
+}
+
+func (cli *CLI[T]) AddPosArgs(values *[]string, pairs ...Pair) error {
+	if len(cli.subCLIs) > 0 {
+		// FIXME this is NOT a parse error!!!
+		return NewParseError("%s: already have subcommands; cannot have also pos args",
+			cli.name)
+	}
+
+	cli.posargs = values
+	cli.pairs = pairs
+	names := make(map[string]int, len(pairs))
+
+	for idx, pair := range pairs {
+		if idx2, found := names[pair.Name]; found {
+			return NewParseError(
+				"%s: pos arg at index %d (%q) was already defined at index %d",
+				cli.name, idx, pair.Name, idx2)
+		}
+		if pair.Name == "" {
+			return NewParseError("%s: pos arg at index %d (%q) cannot be empty",
+				cli.name, idx, pair.Name)
+		}
+
+		// A variable can be bound to only one flag.
+		// for k, fl := range cli.long2flag {
+		// 	if fl.Value == flag.Value {
+		// 		return NewParseError"long flag name %q: variable already bound to flag %q",
+		// 			flag.Long, k))
+		// 	}
+		// }
+
+		names[pair.Name] = idx
+	}
+	return nil
 }
 
 // CountTrue returns the number of args that are true.
@@ -283,6 +361,7 @@ func CountTrue(args ...bool) int {
 	return n
 }
 
+// regex to match an option on the command-line.
 // _                           0  1              2            34  5
 var flagRE = regexp.MustCompile(`^(?P<hyphens>-*)(?P<name>.*?)((=)(?P<value>.+))?$`)
 
@@ -360,72 +439,6 @@ func (cli *CLI[T]) parseOne(args []string) (string, int, error) {
 	return long, 2, nil
 }
 
-func (cli *CLI[T]) usage() error {
-	var bld strings.Builder
-
-	// Calculate the max width of the first column of commands.
-	maxColWidth := 0
-	for _, p := range cli.subCLIs {
-		fmt.Fprintf(&bld, " %s", p.name)
-		maxColWidth = max(maxColWidth, bld.Len())
-		bld.Reset()
-	}
-
-	fmt.Fprintf(&bld, "%s -- %s\n\n", cli.rootToHere, cli.oneline)
-
-	if cli.description != "" {
-		for _, line := range strings.Split(cli.description, "\n") {
-			fmt.Fprintf(&bld, " %s\n", line)
-		}
-		fmt.Fprintln(&bld)
-	}
-
-	fmt.Fprintf(&bld, "Usage: %s ", cli.rootToHere)
-	if len(cli.subCLIs) > 0 {
-		fmt.Fprintf(&bld, "<command> ")
-	}
-	fmt.Fprintf(&bld, "[options]\n\n")
-
-	if cli.examples != "" {
-		fmt.Fprintf(&bld, "Examples:\n\n")
-		for _, line := range strings.Split(cli.examples, "\n") {
-			if line != "" {
-				fmt.Fprintf(&bld, " %s\n", line)
-			} else {
-				fmt.Fprintln(&bld)
-			}
-		}
-		fmt.Fprintln(&bld)
-	}
-
-	if len(cli.groups) > 0 {
-		fmt.Fprintf(&bld, "available commands:\n\n")
-	} else if len(cli.subCLIs) > 0 {
-		fmt.Fprintf(&bld, "Commands:\n\n")
-	}
-
-	const gutter = 4
-	width := maxColWidth + gutter
-
-	// Render the commands, per group.
-	if len(cli.groups) > 0 {
-		for _, group := range cli.groups {
-			fmt.Fprintf(&bld, "%s:\n\n", group.name)
-			for _, cmd := range group.clis {
-				fmt.Fprintf(&bld, " %-*s%s\n", width, cmd.name, cmd.oneline)
-			}
-			fmt.Fprintln(&bld)
-		}
-	} else if len(cli.subCLIs) > 0 {
-		for _, cmd := range cli.subCLIs {
-			fmt.Fprintf(&bld, " %-*s%s\n", width, cmd.name, cmd.oneline)
-		}
-		fmt.Fprintln(&bld)
-	}
-
-	return newHelpError("%s", bld.String()+cli.usageOptions())
-}
-
 // pathRootToNode returns the CLI names in the tree path from the root to
 // 'node'.
 // TODO write test and add this to all errors?
@@ -443,65 +456,9 @@ func pathRootToNode[T any](node *CLI[T]) []string {
 	return path
 }
 
-func (cli *CLI[T]) usageOptions() string {
-	// First pass. Sort keys.
-	longs := maps.Keys(cli.long2flag)
-	slices.Sort(longs)
-
-	// Second pass, calculate the max width of the first column.
-	lines := make([]string, 0, len(longs)+1)
-	var bld strings.Builder
-	maxColWidth := 0
-	for _, long := range longs {
-		flag := cli.long2flag[long]
-		fmt.Fprintf(&bld, " ")
-		if flag.Short != "" {
-			fmt.Fprintf(&bld, "-%s, ", flag.Short)
-		}
-		fmt.Fprintf(&bld, "--%s %s", flag.Long, flag.Label)
-		lines = append(lines, bld.String())
-		maxColWidth = max(maxColWidth, bld.Len())
-		bld.Reset()
-	}
-	// Same for -h
-	fmt.Fprint(&bld, " -h, --help")
-	maxColWidth = max(maxColWidth, bld.Len())
-	bld.Reset()
-
-	// Third pass, add the second column.
-	const gutter = 4
-	fmt.Fprintf(&bld, "Options:\n\n")
-	for i, long := range longs {
-		flag := cli.long2flag[long]
-		fmt.Fprintf(&bld, "%-*s%s", maxColWidth+gutter, lines[i], flag.Help)
-		if flag.defValue != "" && !flag.Required {
-			fmt.Fprintf(&bld, " (default: %s)", flag.defValue)
-		}
-		if flag.Required {
-			fmt.Fprintf(&bld, " (required)")
-		}
-		fmt.Fprintf(&bld, "\n")
-	}
-	if len(longs) > 0 {
-		fmt.Fprintf(&bld, "\n")
-	}
-
-	fmt.Fprintf(&bld, "%-*s%s", maxColWidth+gutter,
-		" -h, --help", "Print this help and exit\n")
-
-	if cli.footer != "" {
-		fmt.Fprintln(&bld)
-		for _, line := range strings.Split(cli.footer, "\n") {
-			fmt.Fprintf(&bld, " %s\n", line)
-		}
-	}
-
-	return bld.String()
-}
-
 func (cli *CLI[T]) run(uctx T) error {
 	if cli.action == nil {
-		return NewParseError("command '%s': no action registered", cli.name)
+		return NewParseError("%s: no action registered", cli.rootToHere)
 	}
 	return cli.action(uctx)
 }

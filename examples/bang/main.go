@@ -38,7 +38,10 @@ type Application struct {
 
 func mainErr(args []string) error {
 	var app Application
-	cli := clim.New("bang", "bangs head against wall", app.run)
+	cli, err := clim.New("bang", "bangs head against wall", app.run)
+	if err != nil {
+		return err
+	}
 
 	// Optional
 	cli.SetDescription(`
@@ -54,33 +57,37 @@ Could be multi-line.`)
 	// Optional
 	cli.SetFooter("For more information, see https://www.example.org/")
 
-	cli.AddFlag(&clim.Flag{
-		Value: clim.Int(&app.count, 3),
-		Short: "c", Long: "count", Label: "N", Help: "How many times",
-	})
-	cli.AddFlag(&clim.Flag{
-		Value: clim.String(&app.wall, "cardboard"),
-		Long:  "wall", Help: "Type of wall",
-	})
-	cli.AddFlag(&clim.Flag{
-		Value: clim.Bool(&app.dryRun, false),
-		Long:  "dry-run", Help: "Enable dry-run",
-	})
-	cli.AddFlag(&clim.Flag{
-		Value: clim.IntSlice(&app.windows, nil),
-		Long:  "windows", Label: "N[,N,..]",
-		Help: "Windows sequence",
-	})
-	cli.AddFlag(&clim.Flag{
-		Value: clim.IntSlice(&app.doors, nil),
-		Long:  "doors", Label: "N[,N,..]",
-		Help: "Doors sequence",
-	})
-	cli.AddFlag(&clim.Flag{
-		Value: clim.StringSlice(&app.floors, nil),
-		Long:  "floors", Label: "F[,F,..]",
-		Help: "Floors sequence",
-	})
+	if err := cli.AddFlags(
+		&clim.Flag{
+			Value: clim.Int(&app.count, 3),
+			Short: "c", Long: "count", Label: "N", Help: "How many times",
+		},
+		&clim.Flag{
+			Value: clim.String(&app.wall, "cardboard"),
+			Long:  "wall", Help: "Type of wall",
+		},
+		&clim.Flag{
+			Value: clim.Bool(&app.dryRun, false),
+			Long:  "dry-run", Help: "Enable dry-run",
+		},
+		&clim.Flag{
+			Value: clim.IntSlice(&app.windows, nil),
+			Long:  "windows", Label: "N[,N,..]",
+			Help: "Windows sequence",
+		},
+		&clim.Flag{
+			Value: clim.IntSlice(&app.doors, nil),
+			Long:  "doors", Label: "N[,N,..]",
+			Help: "Doors sequence",
+		},
+		&clim.Flag{
+			Value: clim.StringSlice(&app.floors, nil),
+			Long:  "floors", Label: "F[,F,..]",
+			Help: "Floors sequence",
+		},
+	); err != nil {
+		return err
+	}
 
 	action, err := cli.Parse(args)
 	if err != nil {

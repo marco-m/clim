@@ -10,17 +10,25 @@ type barCmd struct {
 	hard bool
 }
 
-func newBarCLI() *clim.CLI[App] {
+func newBarCLI(parent *clim.CLI[App]) error {
 	barCmd := barCmd{}
 
-	cli := clim.New("bar", "simple bars all night", barCmd.Run)
+	cli, err := clim.New("bar", "simple bars all night", barCmd.Run)
+	if err != nil {
+		return err
+	}
 
-	cli.AddFlag(&clim.Flag{
-		Value: clim.Bool(&barCmd.hard, false),
-		Long:  "hard", Help: "make harder bars",
-	})
+	if err := cli.AddFlags(
+		&clim.Flag{
+			Value: clim.Bool(&barCmd.hard, false),
+			Long:  "hard", Help: "make harder bars",
+		},
+	); err != nil {
+		return err
+	}
 
-	return cli
+	parent.AddCLI(cli)
+	return nil
 }
 
 func (cmd *barCmd) Run(app App) error {

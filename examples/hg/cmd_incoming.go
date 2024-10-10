@@ -37,35 +37,44 @@ type incomingCmd struct {
 	rev         []string
 }
 
-func newIncomingCLI() *clim.CLI[user] {
+func newIncomingCLI(parent *clim.CLI[user]) (*clim.CLI[user], error) {
 	incomingCmd := incomingCmd{}
 
-	cli := clim.New("incoming",
+	cli, err := clim.New("incoming",
 		"show new changesets found in source",
 		incomingCmd.Run)
+	if err != nil {
+		return nil, err
+	}
 
-	cli.AddFlag(&clim.Flag{
-		Value: clim.Bool(&incomingCmd.force, false),
-		Short: "f", Long: "force",
-		Help: "run even if remote repository is unrelated",
-	})
-	cli.AddFlag(&clim.Flag{
-		Value: clim.Bool(&incomingCmd.newestFirst, false),
-		Short: "n", Long: "newest-first",
-		Help: "show newest record first",
-	})
-	cli.AddFlag(&clim.Flag{
-		Value: clim.String(&incomingCmd.bundle, ""),
-		Long:  "bundle", Label: "FILE",
-		Help: "file to store the bundles into",
-	})
-	cli.AddFlag(&clim.Flag{
-		Value: clim.StringSlice(&incomingCmd.rev, nil),
-		Short: "r", Long: "rev", Label: "REV[,REV,..]",
-		Help: "remote changeset(s) intended to be added",
-	})
+	if err := cli.AddFlags(
+		&clim.Flag{
+			Value: clim.Bool(&incomingCmd.force, false),
+			Short: "f", Long: "force",
+			Help: "run even if remote repository is unrelated",
+		},
+		&clim.Flag{
+			Value: clim.Bool(&incomingCmd.newestFirst, false),
+			Short: "n", Long: "newest-first",
+			Help: "show newest record first",
+		},
+		&clim.Flag{
+			Value: clim.String(&incomingCmd.bundle, ""),
+			Long:  "bundle", Label: "FILE",
+			Help: "file to store the bundles into",
+		},
+		&clim.Flag{
+			Value: clim.StringSlice(&incomingCmd.rev, nil),
+			Short: "r", Long: "rev", Label: "REV[,REV,..]",
+			Help: "remote changeset(s) intended to be added",
+		}); err != nil {
+		return nil, err
+	}
 
-	return cli
+	if err := parent.AddCLI(cli); err != nil {
+		return nil, err
+	}
+	return cli, nil
 }
 
 func (cmd *incomingCmd) Run(uctx user) error {

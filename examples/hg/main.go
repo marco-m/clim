@@ -33,19 +33,38 @@ func mainInt() int {
 type user struct{}
 
 func mainErr(args []string) error {
-	rootCLI := clim.New[user]("hg", "Mercurial Distributed SCM", nil)
+	cli, err := clim.New[user]("hg", "Mercurial Distributed SCM", nil)
+	if err != nil {
+		return err
+	}
 
-	//
-	rootCLI.AddGroup("Repository creation",
-		rootCLI.AddCLI(newCloneCLI()),
-		rootCLI.AddCLI(newInitCLI()))
+	clonecli, err := newCloneCLI(cli)
+	if err != nil {
+		return err
+	}
+	initcli, err := newInitCLI(cli)
+	if err != nil {
+		return err
+	}
+	if err := cli.AddGroup("Repository creation",
+		clonecli, initcli); err != nil {
+		return err
+	}
 
-	//
-	rootCLI.AddGroup("Remote repository management",
-		rootCLI.AddCLI(newIncomingCLI()),
-		rootCLI.AddCLI(newOutgoingCLI()))
+	incomingcli, err := newIncomingCLI(cli)
+	if err != nil {
+		return err
+	}
+	outgoingcli, err := newOutgoingCLI(cli)
+	if err != nil {
+		return err
+	}
+	if err := cli.AddGroup("Remote repository management",
+		incomingcli, outgoingcli); err != nil {
+		return err
+	}
 
-	action, err := rootCLI.Parse(args)
+	action, err := cli.Parse(args)
 	if err != nil {
 		return err
 	}

@@ -20,7 +20,7 @@ func TestBangRun(t *testing.T) {
 	readReset := rosina.InterceptOutput(t, &os.Stdout)
 
 	err := mainErr([]string{})
-	rosina.AssertIsNil(t, err)
+	rosina.AssertNoError(t, err)
 
 	out := readReset()
 	rosina.AssertEqual(t, out, want, "stdout")

@@ -7,20 +7,34 @@ import (
 )
 
 type fooCmd struct {
-	soft bool
+	soft        bool
+	positionals []string
 }
 
-func newFooCLI() *clim.CLI[App] {
+func newFooCLI(parent *clim.CLI[App]) error {
 	fooCmd := fooCmd{}
 
-	cli := clim.New("foo", "simple foos all day", fooCmd.Run)
+	cli, err := clim.New("foo", "simple foos all day", fooCmd.Run)
+	if err != nil {
+		return err
+	}
 
-	cli.AddFlag(&clim.Flag{
+	if err := cli.AddFlags(&clim.Flag{
 		Value: clim.Bool(&fooCmd.soft, false),
 		Long:  "soft", Help: "make softer foos",
-	})
+	}); err != nil {
+		return err
+	}
 
-	return cli
+	if err := cli.AddPosArgs(&fooCmd.positionals,
+		clim.Pair{"COUNT", "How many foos (required)"},
+		clim.Pair{"NAME", "Name of the foos (required)"},
+		clim.Pair{"COLOR...", "One or more colors (required)"}); err != nil {
+		return err
+	}
+
+	parent.AddCLI(cli)
+	return nil
 }
 
 func (cmd *fooCmd) Run(app App) error {
