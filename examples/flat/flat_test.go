@@ -9,13 +9,14 @@ import (
 	"os"
 	"testing"
 
+	"github.com/marco-m/clim"
 	"github.com/marco-m/rosina"
 )
 
-func TestBangRun(t *testing.T) {
-	want := `1 bang against cardboard
-2 bang against cardboard
-3 bang against cardboard
+func TestFlatRun(t *testing.T) {
+	want := `1 flatten against cardboard
+2 flatten against cardboard
+3 flatten against cardboard
 `
 	readReset := rosina.InterceptOutput(t, &os.Stdout)
 
@@ -23,16 +24,16 @@ func TestBangRun(t *testing.T) {
 	rosina.AssertNoError(t, err)
 
 	out := readReset()
-	rosina.AssertEqual(t, out, want, "stdout")
+	rosina.AssertTextEqual(t, out, want, "stdout")
 }
 
-func TestBangCliHelp(t *testing.T) {
-	want := `bang -- bangs head against wall
+func TestFlatCliHelp(t *testing.T) {
+	want := `flat -- flattens head against wall
 
  Long description.
  Could be multi-line.
 
-Usage: bang [options]
+Usage: flat [options]
 
 Examples:
 
@@ -54,10 +55,11 @@ Options:
  For more information, see https://www.example.org/
 `
 	err := mainErr([]string{"-h"})
-	rosina.AssertErrorContains(t, err, want)
+	rosina.AssertErrorIs(t, err, clim.ErrHelp)
+	rosina.AssertTextEqual(t, err.Error(), want, "error message")
 }
 
-func TestBangCliWrongInvocation(t *testing.T) {
+func TestFlatCliWrongInvocation(t *testing.T) {
 	want := `unrecognized flag "--foobar"`
 	err := mainErr([]string{"--foobar"})
 	rosina.AssertErrorContains(t, err, want)

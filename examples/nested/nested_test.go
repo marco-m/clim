@@ -22,16 +22,34 @@ func TestFoo(t *testing.T) {
 }
 
 func TestBar(t *testing.T) {
-	want := `hello from BarCmd Run
-&main.barCmd{hard:false}
+	err := mainErr([]string{"bar"})
+	rosina.AssertErrorContains(t, err, "expected a command")
+}
+
+func TestBarList(t *testing.T) {
+	want := `hello from bar list Run
+&main.barListCmd{foo:"A"}
 `
 	readReset := rosina.InterceptOutput(t, &os.Stdout)
 
-	err := mainErr([]string{"bar"})
+	err := mainErr([]string{"bar", "list", "--foo=A"})
 	rosina.AssertNoError(t, err)
 
 	out := readReset()
-	rosina.AssertEqual(t, out, want, "stdout")
+	rosina.AssertTextEqual(t, out, want, "stdout")
+}
+
+func TestBarMove(t *testing.T) {
+	want := `hello from bar move Run
+&main.barMoveCmd{id:3, dst:"A"}
+`
+	readReset := rosina.InterceptOutput(t, &os.Stdout)
+
+	err := mainErr([]string{"bar", "move", "--foo=A", "--id=3"})
+	rosina.AssertNoError(t, err)
+
+	out := readReset()
+	rosina.AssertTextEqual(t, out, want, "stdout")
 }
 
 func TestCliParseError(t *testing.T) {

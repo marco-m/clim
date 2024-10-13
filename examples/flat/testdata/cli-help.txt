@@ -1,17 +1,17 @@
 #
 # help
 #
-exec bang -h
+exec flat -h
 ! stderr .
-cmp stdout bang-help.WANT
+cmp stdout flat-help.WANT
 
--- bang-help.WANT --
-bang -- bangs head against wall
+-- flat-help.WANT --
+flat -- flattens head against wall
 
  Long description.
  Could be multi-line.
 
-Usage: bang [options]
+Usage: flat [options]
 
 Examples:
 

@@ -4,7 +4,7 @@
 # NOTE This test doesn't really make sense in a program using clim, since this
 # behavior is guaranteed by clim itself...
 #
-! exec bang --foobar
+! exec flat --foobar
 ! stderr .
 stdout 'unrecognized flag "--foobar"'
 
@@ -14,6 +14,6 @@ stdout 'unrecognized flag "--foobar"'
 # This test makes sense, since it exercises some validation logic implemented
 # by the program.
 #
-! exec bang --doors=1,2,3 --floors=A,bang
+! exec flat --doors=1,2,3 --floors=A,bang
 ! stderr .
 stdout 'only one of doors, windows, floors can be specified'

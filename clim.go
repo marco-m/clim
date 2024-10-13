@@ -37,7 +37,7 @@ func newHelpError(format string, a ...any) error {
 }
 
 // CLI represents the top-level command, created with [New], and any
-// subcommands, created with [CLI.AddCLI]. A [Flag] is added with [CLI.AddFlag].
+// subcommands, created with [CLI.addCLI]. A [Flag] is added with [CLI.AddFlag].
 type CLI[T any] struct {
 	name        string
 	oneline     string
@@ -66,21 +66,42 @@ type cliGroup[T any] struct {
 // New creates the top-level [CLI], representing the program itself,
 // and sets action, to be returned by a successful parse.
 // 'oneline' is the one line description.
-// See [CLI.AddCLI] to add a sub CLI (subcommand).
-func New[T any](name string, oneline string, action ActionFn[T]) (*CLI[T], error) {
+func New[T any](parent *CLI[T], name string, oneline string, action ActionFn[T]) (*CLI[T], error) {
 	if name == "" {
 		return nil, NewParseError("clim.New: name cannot be empty")
 	}
-	return &CLI[T]{
+	child := &CLI[T]{
+		parent:     parent,
 		name:       name,
 		oneline:    oneline,
 		action:     action,
 		long2flag:  make(map[string]*Flag),
 		short2long: make(map[string]string),
 		// name2posarg: make(map[string]*PosArg),
-		longSeen:   map[string]struct{}{},
-		rootToHere: name, // if child, overwritten by AddCLI.
-	}, nil
+		longSeen: map[string]struct{}{},
+	}
+	child.rootToHere = strings.Join(pathRootToNode(child), " ")
+
+	if parent == nil {
+		return child, nil
+	}
+
+	if parent.posargs != nil {
+		return nil,
+			NewParseError(
+				"%s: already have pos args; cannot have also subcommand %q",
+				parent.name, child.name)
+	}
+	for _, sc := range parent.subCLIs {
+		if child.name == sc.name {
+			// `banana: long flag name "count" already defined`
+			return nil,
+				NewParseError("%s: subcommand %q already defined",
+					parent.rootToHere, child.name)
+		}
+	}
+	parent.subCLIs = append(parent.subCLIs, child)
+	return child, nil
 }
 
 func (cli *CLI[T]) SetDescription(desc string) {
@@ -196,28 +217,6 @@ func (cli *CLI[T]) addFlag(flag *Flag) error {
 	}
 	cli.long2flag[flag.Long] = flag
 
-	return nil
-}
-
-// AddCLI adds 'child' (which must be correctly setup) to this CLI.
-// It returns 'child' itself.
-func (cli *CLI[T]) AddCLI(child *CLI[T]) error {
-	if cli.posargs != nil {
-		return NewParseError(
-			"%s: already have pos args; cannot have also subcommand %q",
-			cli.name, child.name)
-	}
-
-	for _, sc := range cli.subCLIs {
-		if child.name == sc.name {
-			// `banana: long flag name "count" already defined`
-			return NewParseError("%s: subcommand %q already defined",
-				cli.rootToHere, child.name)
-		}
-	}
-	child.parent = cli
-	child.rootToHere = strings.Join(pathRootToNode(child), " ")
-	cli.subCLIs = append(cli.subCLIs, child)
 	return nil
 }
 

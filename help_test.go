@@ -14,7 +14,7 @@ func TestSimpleHelp(t *testing.T) {
 		dryRun bool
 	}
 	var args Args
-	cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+	cli, err := clim.New[any](nil, "bang", "bangs head against wall", nil)
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(
@@ -62,7 +62,7 @@ func TestHelpOfRequiredFlag(t *testing.T) {
 	var count int
 	var level int
 
-	cli, err := clim.New[any]("bang", "bang head", nil)
+	cli, err := clim.New[any](nil, "bang", "bang head", nil)
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(
@@ -117,7 +117,7 @@ Options:
  this is the footer
 `
 
-	cli, err := clim.New[any]("bang", "bang head", nil)
+	cli, err := clim.New[any](nil, "bang", "bang head", nil)
 	rosina.AssertNoError(t, err)
 
 	cli.SetDescription("this is the description")
@@ -133,14 +133,11 @@ This is the last line of the example.`)
 	rosina.AssertTextEqual(t, err.Error(), want, "help message")
 }
 
-func TestHelpSubCommands(t *testing.T) {
-	cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+func TestHelpSubCommandsOneLevel(t *testing.T) {
+	cli, err := clim.New[any](nil, "bang", "bangs head against wall", nil)
 	rosina.AssertNoError(t, err)
 
-	subCli, err := clim.New[any]("sub", "I am a subcommand", nil)
-	rosina.AssertNoError(t, err)
-
-	err = cli.AddCLI(subCli)
+	_, err = clim.New[any](cli, "sub", "I am a subcommand", nil)
 	rosina.AssertNoError(t, err)
 
 	want := `bang -- bangs head against wall
@@ -161,20 +158,38 @@ Options:
 	rosina.AssertDeepEqual(t, err.Error(), want, "error text")
 }
 
+func TestHelpSubCommandsTwoLevels(t *testing.T) {
+	cli, err := clim.New[any](nil, "bang", "bangs head against wall", nil)
+	rosina.AssertNoError(t, err)
+
+	sub1, err := clim.New[any](cli, "sub1", "I am a subcommand at level 1", nil)
+	rosina.AssertNoError(t, err)
+
+	_, err = clim.New[any](sub1, "sub2", "I am a subcommand at level 2", nil)
+	rosina.AssertNoError(t, err)
+
+	want := `bang sub1 sub2 -- I am a subcommand at level 2
+
+Usage: bang sub1 sub2 [options]
+
+Options:
+
+ -h, --help    Print this help and exit
+`
+	_, err = cli.Parse([]string{"sub1", "sub2", "-h"})
+
+	rosina.AssertErrorIs(t, err, clim.ErrHelp)
+	rosina.AssertDeepEqual(t, err.Error(), want, "error text")
+}
+
 func TestHelpSubCommandsGroup(t *testing.T) {
-	cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+	cli, err := clim.New[any](nil, "bang", "bangs head against wall", nil)
 	rosina.AssertNoError(t, err)
 
-	subCliA, err := clim.New[any]("sub-A", "I am subcommand A", nil)
+	subCliA, err := clim.New[any](cli, "sub-A", "I am subcommand A", nil)
 	rosina.AssertNoError(t, err)
 
-	err = cli.AddCLI(subCliA)
-	rosina.AssertNoError(t, err)
-
-	subCliB, err := clim.New[any]("sub-B", "I am subcommand B", nil)
-	rosina.AssertNoError(t, err)
-
-	err = cli.AddCLI(subCliB)
+	subCliB, err := clim.New[any](cli, "sub-B", "I am subcommand B", nil)
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddGroup("group 1", subCliA)
@@ -223,7 +238,7 @@ Positional arguments:
  COLOR...      One or more colors (required)
 `
 
-	cli, err := clim.New[any]("bang", "bang head", nil)
+	cli, err := clim.New[any](nil, "bang", "bang head", nil)
 	rosina.AssertNoError(t, err)
 
 	var positionals []string

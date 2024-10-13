@@ -14,7 +14,7 @@ type cloneCmd struct {
 func newCloneCLI(parent *clim.CLI[user]) (*clim.CLI[user], error) {
 	cloneCmd := cloneCmd{}
 
-	cli, err := clim.New("clone",
+	cli, err := clim.New(parent, "clone",
 		"make a copy of an existing repository",
 		cloneCmd.Run)
 	if err != nil {
@@ -35,9 +35,6 @@ func newCloneCLI(parent *clim.CLI[user]) (*clim.CLI[user], error) {
 		return nil, err
 	}
 
-	if err := parent.AddCLI(cli); err != nil {
-		return nil, err
-	}
 	return cli, nil
 }
 

@@ -40,7 +40,7 @@ type incomingCmd struct {
 func newIncomingCLI(parent *clim.CLI[user]) (*clim.CLI[user], error) {
 	incomingCmd := incomingCmd{}
 
-	cli, err := clim.New("incoming",
+	cli, err := clim.New(parent, "incoming",
 		"show new changesets found in source",
 		incomingCmd.Run)
 	if err != nil {
@@ -71,9 +71,6 @@ func newIncomingCLI(parent *clim.CLI[user]) (*clim.CLI[user], error) {
 		return nil, err
 	}
 
-	if err := parent.AddCLI(cli); err != nil {
-		return nil, err
-	}
 	return cli, nil
 }
 
