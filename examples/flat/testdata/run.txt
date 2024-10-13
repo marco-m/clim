@@ -1,0 +1,23 @@
+#
+# run, all defaults
+#
+exec flat
+! stderr .
+cmp stdout out.default.WANT
+
+#
+# run, custom values
+#
+exec flat --wall=steel --count=5
+cmp stdout out.custom.WANT
+
+-- out.default.WANT --
+1 flatten against cardboard
+2 flatten against cardboard
+3 flatten against cardboard
+-- out.custom.WANT --
+1 flatten against steel
+2 flatten against steel
+3 flatten against steel
+4 flatten against steel
+5 flatten against steel

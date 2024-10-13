@@ -58,13 +58,13 @@ Options:
 It also supports optional multi-line description, multi-line examples and multi-line footer:
 
 ```console
-$ go run ./examples/bang -h
-bang -- bangs head against wall
+$ go run ./examples/flat -h
+flat -- bangs head against wall
 
  Long description.
  Could be multi-line.
 
-Usage: bang [options]
+Usage: flat [options]
 
 Examples:
 
@@ -96,7 +96,7 @@ There are two ways to test a program using clim. Pick the one you prefer:
 2. With [rogpeppe/go-internal/testscript](https://github.com/rogpeppe/go-internal). If you are not familiar with testscript, try it. It is both powerful and simple. For a gentle introduction, see the blog series:
    [Test scripts in Go](https://bitfieldconsulting.com/posts/test-scripts).
 
-In particular, see [examples/bang](examples/bang), where the two approaches are shown.
+In particular, see [examples/flat](examples/flat), where the two approaches are shown.
 
 ## Status
 

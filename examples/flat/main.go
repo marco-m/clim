@@ -38,7 +38,7 @@ type Application struct {
 
 func mainErr(args []string) error {
 	var app Application
-	cli, err := clim.New("bang", "bangs head against wall", app.run)
+	cli, err := clim.New("flat", "flattens head against wall", app.run)
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func (args *Application) run(uctx int) error {
 	}
 
 	for i := range args.count {
-		fmt.Println(i+1, "bang against", args.wall)
+		fmt.Println(i+1, "flatten against", args.wall)
 	}
 	return nil
 }
