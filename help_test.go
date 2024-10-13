@@ -133,7 +133,7 @@ This is the last line of the example.`)
 	rosina.AssertTextEqual(t, err.Error(), want, "help message")
 }
 
-func TestHelpSubCommands(t *testing.T) {
+func TestHelpSubCommandsOneLevel(t *testing.T) {
 	cli, err := clim.New[any]("bang", "bangs head against wall", nil)
 	rosina.AssertNoError(t, err)
 
@@ -156,6 +156,34 @@ Options:
  -h, --help    Print this help and exit
 `
 	_, err = cli.Parse([]string{"-h"})
+
+	rosina.AssertErrorIs(t, err, clim.ErrHelp)
+	rosina.AssertDeepEqual(t, err.Error(), want, "error text")
+}
+
+func TestHelpSubCommandsTwoLevels(t *testing.T) {
+	cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+	rosina.AssertNoError(t, err)
+
+	sub1, err := clim.New[any]("sub1", "I am a subcommand at level 1", nil)
+	rosina.AssertNoError(t, err)
+	err = cli.AddCLI(sub1)
+	rosina.AssertNoError(t, err)
+
+	sub2, err := clim.New[any]("sub2", "I am a subcommand at level 2", nil)
+	rosina.AssertNoError(t, err)
+	err = sub1.AddCLI(sub2)
+	rosina.AssertNoError(t, err)
+
+	want := `bang sub1 sub2 -- I am a subcommand at level 2
+
+Usage: bang sub1 sub2 [options]
+
+Options:
+
+ -h, --help    Print this help and exit
+`
+	_, err = cli.Parse([]string{"sub1", "sub2", "-h"})
 
 	rosina.AssertErrorIs(t, err, clim.ErrHelp)
 	rosina.AssertDeepEqual(t, err.Error(), want, "error text")
