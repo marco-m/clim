@@ -7,7 +7,8 @@ import (
 )
 
 func newBarCLI(parent *clim.CLI[App]) error {
-	cli, err := clim.New[App]("bar", "simple bars all night; has subcommands", nil)
+	cli, err := clim.New[App](parent, "bar",
+		"simple bars all night; has subcommands", nil)
 	if err != nil {
 		return err
 	}
@@ -19,7 +20,6 @@ func newBarCLI(parent *clim.CLI[App]) error {
 		return err
 	}
 
-	parent.AddCLI(cli)
 	return nil
 }
 
@@ -34,7 +34,8 @@ type barListCmd struct {
 func newBarListCLI(parent *clim.CLI[App]) error {
 	barListCmd := barListCmd{}
 
-	cli, err := clim.New("list", "list all bars in a given foo", barListCmd.Run)
+	cli, err := clim.New(parent, "list", "list all bars in a given foo",
+		barListCmd.Run)
 	if err != nil {
 		return err
 	}
@@ -48,7 +49,6 @@ func newBarListCLI(parent *clim.CLI[App]) error {
 		return err
 	}
 
-	parent.AddCLI(cli)
 	return nil
 }
 
@@ -70,7 +70,8 @@ type barMoveCmd struct {
 func newBarMoveCLI(parent *clim.CLI[App]) error {
 	barMoveCmd := barMoveCmd{}
 
-	cli, err := clim.New("move", "move a bar into a foo", barMoveCmd.Run)
+	cli, err := clim.New(parent, "move",
+		"move a bar into a foo", barMoveCmd.Run)
 	if err != nil {
 		return err
 	}
@@ -89,7 +90,6 @@ func newBarMoveCLI(parent *clim.CLI[App]) error {
 		return err
 	}
 
-	parent.AddCLI(cli)
 	return nil
 }
 

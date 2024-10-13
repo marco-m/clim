@@ -40,7 +40,7 @@ type outgoingCmd struct {
 func newOutgoingCLI(parent *clim.CLI[user]) (*clim.CLI[user], error) {
 	outgoingCmd := outgoingCmd{}
 
-	cli, err := clim.New("outgoing",
+	cli, err := clim.New(parent, "outgoing",
 		"show changesets not found in the destination",
 		outgoingCmd.Run)
 	if err != nil {
@@ -69,9 +69,6 @@ func newOutgoingCLI(parent *clim.CLI[user]) (*clim.CLI[user], error) {
 		return nil, err
 	}
 
-	if err := parent.AddCLI(cli); err != nil {
-		return nil, err
-	}
 	return cli, nil
 }
 

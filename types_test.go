@@ -17,7 +17,7 @@ func TestParseIntSuccess(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var count int
-		cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+		cli, err := clim.New[any](nil, "bang", "bangs head against wall", nil)
 		rosina.AssertNoError(t, err)
 
 		err = cli.AddFlags(&clim.Flag{
@@ -68,7 +68,7 @@ func TestParseIntFailure(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var count int
-		cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+		cli, err := clim.New[any](nil, "bang", "bangs head against wall", nil)
 		rosina.AssertNoError(t, err)
 
 		err = cli.AddFlags(&clim.Flag{
@@ -102,7 +102,7 @@ func TestParseIntFailure(t *testing.T) {
 
 func TestParseIntSliceSuccess(t *testing.T) {
 	var pippos []int
-	cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+	cli, err := clim.New[any](nil, "bang", "bangs head against wall", nil)
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(&clim.Flag{
@@ -118,7 +118,7 @@ func TestParseIntSliceSuccess(t *testing.T) {
 
 func TestParseIntSliceFailure(t *testing.T) {
 	var pippos []int
-	cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+	cli, err := clim.New[any](nil, "bang", "bangs head against wall", nil)
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(&clim.Flag{
@@ -142,7 +142,7 @@ func TestParseString(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var fruit string
-		cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+		cli, err := clim.New[any](nil, "bang", "bangs head against wall", nil)
 		rosina.AssertNoError(t, err)
 
 		err = cli.AddFlags(&clim.Flag{
@@ -186,7 +186,7 @@ func TestParseString(t *testing.T) {
 
 func TestParseStringSliceSuccess(t *testing.T) {
 	var mickeys []string
-	cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+	cli, err := clim.New[any](nil, "bang", "bangs head against wall", nil)
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(&clim.Flag{
@@ -209,7 +209,7 @@ func TestParseBoolSuccess(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var sliced bool
-		cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+		cli, err := clim.New[any](nil, "bang", "bangs head against wall", nil)
 		rosina.AssertNoError(t, err)
 
 		err = cli.AddFlags(&clim.Flag{
@@ -265,7 +265,7 @@ func TestParseBoolFailure(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var sliced bool
-		cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+		cli, err := clim.New[any](nil, "bang", "bangs head against wall", nil)
 		rosina.AssertNoError(t, err)
 
 		err = cli.AddFlags(&clim.Flag{
@@ -294,7 +294,7 @@ func TestParseBoolFailure(t *testing.T) {
 
 func TestParseDurationSuccess(t *testing.T) {
 	var timeout time.Duration
-	cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+	cli, err := clim.New[any](nil, "bang", "bangs head against wall", nil)
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(&clim.Flag{
@@ -310,7 +310,7 @@ func TestParseDurationSuccess(t *testing.T) {
 
 func TestParseDurationFailure(t *testing.T) {
 	var timeout time.Duration
-	cli, err := clim.New[any]("bang", "bangs head against wall", nil)
+	cli, err := clim.New[any](nil, "bang", "bangs head against wall", nil)
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(&clim.Flag{
