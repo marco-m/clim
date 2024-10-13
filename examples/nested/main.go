@@ -33,7 +33,7 @@ type App struct {
 
 func mainErr(args []string) error {
 	app := App{}
-	cli, err := clim.New[App]("twocommands", "two simple commands, no groups", nil)
+	cli, err := clim.New[App]("nested", "two subcommands and one nested", nil)
 	if err != nil {
 		return err
 	}
