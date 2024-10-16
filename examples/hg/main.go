@@ -33,7 +33,7 @@ func mainInt() int {
 type user struct{}
 
 func mainErr(args []string) error {
-	cli, err := clim.New[user](nil, "hg", "Mercurial Distributed SCM", nil)
+	cli, err := clim.NewTop[user]("hg", "Mercurial Distributed SCM", nil)
 	if err != nil {
 		return err
 	}

@@ -14,7 +14,7 @@ type fooCmd struct {
 func newFooCLI(parent *clim.CLI[App]) error {
 	fooCmd := fooCmd{}
 
-	cli, err := clim.New(parent, "foo", "simple foos all day", fooCmd.Run)
+	cli, err := clim.NewSub(parent, "foo", "simple foos all day", fooCmd.Run)
 	if err != nil {
 		return err
 	}
