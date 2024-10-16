@@ -4,20 +4,6 @@
 version: "3"
 set: [pipefail]
 
-vars:
-  DATE: '{{ now | date "2006-01-02" }}'
-  REPO: github.com/marco-m/clim
-    # This would work also:
-    # sh: go list .
-  COMMIT:
-    sh: git log -n 1 --format=%h
-  BRANCH:
-    sh: git branch --show-current
-  # FIXME both commit and date (I think) can be obtained from the std/debug package
-  BUILD_INFO: "commit: {{.COMMIT}}, build date: {{.DATE}}"
-  # FIXME this is wrong probably
-  LDFLAGS: -w -X '{{.REPO}}/cim.buildinfo={{.BUILD_INFO}}'
-
 tasks:
 
   pre-commit:
@@ -78,7 +64,10 @@ tasks:
   build:
     desc: Build all.
     cmds:
-      - go build -ldflags "{{.LDFLAGS}}" ./...
+      - go build .
+      - go build -o ./bin/flat   ./examples/flat
+      - go build -o ./bin/hg     ./examples/hg
+      - go build -o ./bin/nested ./examples/nested
 
   clean:
     desc: Delete build artifacts

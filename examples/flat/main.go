@@ -38,7 +38,7 @@ type Application struct {
 
 func mainErr(args []string) error {
 	var app Application
-	cli, err := clim.New(nil, "flat", "flattens head against wall", app.run)
+	cli, err := clim.NewTop("flat", "flattens head against wall", app.run)
 	if err != nil {
 		return err
 	}

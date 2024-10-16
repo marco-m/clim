@@ -8,9 +8,6 @@ import (
 	"strings"
 )
 
-// ActionFn is the function type of the "action" returned by a parser.
-type ActionFn[T any] func(uctx T) error
-
 var (
 	// ErrHelp is returned when the user asked for help.
 	// Check for this case with errors.Is(err, clim.ErrHelp)
@@ -54,7 +51,7 @@ type CLI[T any] struct {
 	parent     *CLI[T]
 	rootToHere string
 	subCLIs    []*CLI[T]
-	action     ActionFn[T]
+	action     func(uctx T) error
 	groups     []cliGroup[T]
 }
 
@@ -63,29 +60,35 @@ type cliGroup[T any] struct {
 	clis []*CLI[T]
 }
 
-// New creates the top-level [CLI], representing the program itself,
-// and sets action, to be returned by a successful parse.
-// 'oneline' is the one line description.
-func New[T any](parent *CLI[T], name string, oneline string, action ActionFn[T]) (*CLI[T], error) {
+// NewTop creates the top-level [CLI], representing the program itself.
+// Parameter 'name' is the program name; parameter 'oneline' is the one-line
+// description. Parameter 'action', optional, will be returned by [Parse] if
+// the command-line invokes the program, instead of invoking a subcommand.
+// Type 'T' is the type of the  parameter of function 'action'.
+// To add a subcommand, see [NewSub].
+func NewTop[T any](name string, oneline string, action func(uctx T) error,
+) (*CLI[T], error) {
 	if name == "" {
-		return nil, NewParseError("clim.New: name cannot be empty")
+		return nil, NewParseError("cli name cannot be empty")
 	}
-	child := &CLI[T]{
-		parent:     parent,
-		name:       name,
-		oneline:    oneline,
-		action:     action,
-		long2flag:  make(map[string]*Flag),
-		short2long: make(map[string]string),
-		// name2posarg: make(map[string]*PosArg),
-		longSeen: map[string]struct{}{},
-	}
-	child.rootToHere = strings.Join(pathRootToNode(child), " ")
+	return newCli(nil, name, oneline, action), nil
+}
 
+// NewSub creates a subcommand and adds it to the 'parent' node, which itself
+// could be the top command (created by [NewTop]) or an intermediate subcommand.
+// Parameter 'name' is the name of the subcommand; parameter 'oneline' is the
+// one-line description. Parameter 'action' will be returned by [Parse] if
+// the command-line invokes this subcommand.
+func NewSub[T any](parent *CLI[T], name string, oneline string,
+	action func(uctx T) error,
+) (*CLI[T], error) {
+	if name == "" {
+		return nil, NewParseError("cli name cannot be empty")
+	}
 	if parent == nil {
-		return child, nil
+		return nil, NewParseError("parent cli cannot be nil")
 	}
-
+	child := newCli(parent, name, oneline, action)
 	if parent.posargs != nil {
 		return nil,
 			NewParseError(
@@ -102,6 +105,23 @@ func New[T any](parent *CLI[T], name string, oneline string, action ActionFn[T])
 	}
 	parent.subCLIs = append(parent.subCLIs, child)
 	return child, nil
+}
+
+func newCli[T any](parent *CLI[T], name string, oneline string,
+	action func(uctx T) error,
+) *CLI[T] {
+	child := &CLI[T]{
+		parent:     parent,
+		name:       name,
+		oneline:    oneline,
+		action:     action,
+		long2flag:  make(map[string]*Flag),
+		short2long: make(map[string]string),
+		// name2posarg: make(map[string]*PosArg),
+		longSeen: map[string]struct{}{},
+	}
+	child.rootToHere = strings.Join(pathRootToNode(child), " ")
+	return child
 }
 
 func (cli *CLI[T]) SetDescription(desc string) {
@@ -237,7 +257,7 @@ func (cli *CLI[T]) AddGroup(name string, clis ...*CLI[T]) error {
 
 // Parse processes args, following subcommands (if any), and returns the
 // associated action.
-func (cli *CLI[T]) Parse(args []string) (ActionFn[T], error) {
+func (cli *CLI[T]) Parse(args []string) (func(uctx T) error, error) {
 	index := 0
 
 	// Parse all the options. At the end of the loop, 'index' points to the

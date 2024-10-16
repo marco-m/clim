@@ -30,7 +30,7 @@ type initCmd struct {
 func newInitCLI(parent *clim.CLI[user]) (*clim.CLI[user], error) {
 	initCmd := initCmd{}
 
-	cli, err := clim.New(parent, "init",
+	cli, err := clim.NewSub(parent, "init",
 		"create a new repository in the given directory",
 		initCmd.Run)
 	if err != nil {

@@ -7,7 +7,7 @@ import (
 )
 
 func newBarCLI(parent *clim.CLI[App]) error {
-	cli, err := clim.New[App](parent, "bar",
+	cli, err := clim.NewSub[App](parent, "bar",
 		"simple bars all night; has subcommands", nil)
 	if err != nil {
 		return err
@@ -34,7 +34,7 @@ type barListCmd struct {
 func newBarListCLI(parent *clim.CLI[App]) error {
 	barListCmd := barListCmd{}
 
-	cli, err := clim.New(parent, "list", "list all bars in a given foo",
+	cli, err := clim.NewSub(parent, "list", "list all bars in a given foo",
 		barListCmd.Run)
 	if err != nil {
 		return err
@@ -70,7 +70,7 @@ type barMoveCmd struct {
 func newBarMoveCLI(parent *clim.CLI[App]) error {
 	barMoveCmd := barMoveCmd{}
 
-	cli, err := clim.New(parent, "move",
+	cli, err := clim.NewSub(parent, "move",
 		"move a bar into a foo", barMoveCmd.Run)
 	if err != nil {
 		return err
