@@ -2,8 +2,6 @@ package clim
 
 import (
 	"fmt"
-	"maps"
-	"slices"
 	"strings"
 )
 
@@ -83,14 +81,14 @@ func (cli *CLI[T]) usage() error {
 }
 
 func (cli *CLI[T]) printOptions(bld *strings.Builder) {
-	// First pass. Sort keys.
-	longs := slices.Sorted(maps.Keys(cli.long2flag))
+	// Do not sort the flags! The sorting breaks any semantic meaning that the
+	// manual ordering had.
 
-	// Second pass, calculate the max width of the first column.
-	lines := make([]string, 0, len(longs)+1)
+	// Calculate the max width of the first column.
+	lines := make([]string, 0, len(cli.orderedFlags)+1)
 	var tmp strings.Builder
 	maxColWidth := 0
-	for _, long := range longs {
+	for _, long := range cli.orderedFlags {
 		flag := cli.long2flag[long]
 		fmt.Fprintf(&tmp, " ")
 		if flag.Short != "" {
@@ -109,7 +107,7 @@ func (cli *CLI[T]) printOptions(bld *strings.Builder) {
 	// Third pass, add the second column.
 	const gutter = 4
 	fmt.Fprintf(bld, "Options:\n\n")
-	for i, long := range longs {
+	for i, long := range cli.orderedFlags {
 		flag := cli.long2flag[long]
 		fmt.Fprintf(bld, "%-*s%s", maxColWidth+gutter, lines[i], flag.Help)
 		if flag.defValue != "" && !flag.Required {
@@ -120,7 +118,7 @@ func (cli *CLI[T]) printOptions(bld *strings.Builder) {
 		}
 		fmt.Fprintf(bld, "\n")
 	}
-	if len(longs) > 0 {
+	if len(cli.orderedFlags) > 0 {
 		fmt.Fprintf(bld, "\n")
 	}
 

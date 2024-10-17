@@ -36,17 +36,18 @@ func newHelpError(format string, a ...any) error {
 // CLI represents the top-level command, created with [New], and any
 // subcommands, created with [CLI.addCLI]. A [Flag] is added with [CLI.AddFlag].
 type CLI[T any] struct {
-	name        string
-	oneline     string
-	description string
-	examples    string
-	footer      string
-	long2flag   map[string]*Flag
-	short2long  map[string]string
-	posargs     *[]string
-	pairs       []Pair
-	longSeen    map[string]struct{} // Options seen on the command-line
-	positionals []string
+	name         string
+	oneline      string
+	description  string
+	examples     string
+	footer       string
+	orderedFlags []string // The flags in the order the user added them
+	long2flag    map[string]*Flag
+	short2long   map[string]string
+	posargs      *[]string
+	pairs        []Pair
+	longSeen     map[string]struct{} // Options seen on the command-line
+	positionals  []string
 	//
 	parent     *CLI[T]
 	rootToHere string
@@ -236,6 +237,7 @@ func (cli *CLI[T]) addFlag(flag *Flag) error {
 		cli.short2long[flag.Short] = flag.Long
 	}
 	cli.long2flag[flag.Long] = flag
+	cli.orderedFlags = append(cli.orderedFlags, flag.Long)
 
 	return nil
 }
