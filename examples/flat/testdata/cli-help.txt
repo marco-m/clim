@@ -22,11 +22,11 @@ Examples:
 Options:
 
  -c, --count N         How many times (default: 3)
- --doors N[,N,..]      Doors sequence
- --dry-run             Enable dry-run (default: false)
- --floors F[,F,..]     Floors sequence
  --wall WALL           Type of wall (default: cardboard)
+ --dry-run             Enable dry-run (default: false)
  --windows N[,N,..]    Windows sequence
+ --doors N[,N,..]      Doors sequence
+ --floors F[,F,..]     Floors sequence
 
  -h, --help            Print this help and exit
 

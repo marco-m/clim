@@ -46,8 +46,8 @@ Usage: bang [options]
 Options:
 
  -c, --count N    How many times (default: 3)
- --dry-run        Enable dry-run (default: false)
  --wall WALL      Type of wall (default: cardboard)
+ --dry-run        Enable dry-run (default: false)
 
  -h, --help       Print this help and exit
 `
