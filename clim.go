@@ -157,9 +157,6 @@ type Flag struct {
 //
 // Taken from std/flag and adapted.
 func (cli *CLI[T]) AddFlags(flags ...*Flag) error {
-	if len(cli.long2flag) > 0 {
-		return NewParseError("cannot call AddFlags more than once")
-	}
 	for _, f := range flags {
 		if err := cli.addFlag(f); err != nil {
 			return err

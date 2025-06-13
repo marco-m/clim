@@ -8,22 +8,6 @@ import (
 	"github.com/marco-m/rosina"
 )
 
-func TestAddFlagsMoreThanOnce(t *testing.T) {
-	var foo, bar int
-	cli, err := clim.NewTop[any]("banana", "I am tasty", nil)
-	rosina.AssertNoError(t, err)
-
-	err = cli.AddFlags(
-		&clim.Flag{Value: clim.Int(&foo, 3), Long: "foo"},
-	)
-	rosina.AssertNoError(t, err)
-
-	err = cli.AddFlags(
-		&clim.Flag{Value: clim.Int(&bar, 3), Long: "bar"},
-	)
-	rosina.AssertErrorContains(t, err, "cannot call AddFlags more than once")
-}
-
 func TestVariableCanBeBoundOnlyOnce(t *testing.T) {
 	var count int
 	cli, err := clim.NewTop[any]("banana", "I am tasty", nil)
