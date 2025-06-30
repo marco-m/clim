@@ -27,9 +27,9 @@ func newFooCLI(parent *clim.CLI[App]) error {
 	}
 
 	if err := cli.AddPosArgs(&fooCmd.positionals,
-		clim.Pair{"COUNT", "How many foos (required)"},
-		clim.Pair{"NAME", "Name of the foos (required)"},
-		clim.Pair{"COLOR...", "One or more colors (required)"}); err != nil {
+		clim.Pair{Name: "COUNT", Help: "How many foos (required)"},
+		clim.Pair{Name: "NAME", Help: "Name of the foos (required)"},
+		clim.Pair{Name: "COLOR...", Help: "One or more colors (required)"}); err != nil {
 		return err
 	}
 
