@@ -133,6 +133,100 @@ func TestParseIntSliceFailure(t *testing.T) {
 		`setting "--pippos=a,b,c": could not parse "a" as int (strconv.Atoi: parsing "a": invalid syntax)`)
 }
 
+func TestParseFloatSuccess(t *testing.T) {
+	type testCase struct {
+		name string
+		args []string
+		want float64
+	}
+
+	test := func(tc testCase) {
+		t.Helper()
+		var value float64
+		cli, err := clim.NewTop[any]("bang", "banana", nil)
+		if err != nil {
+			t.Fatalf("%s: NewTop: %s", tc.name, err)
+		}
+
+		err = cli.AddFlags(&clim.Flag{
+			Value: clim.Float64(&value, 3.5),
+			Short: "v", Long: "value",
+		})
+		if err != nil {
+			t.Fatalf("%s: AddFlags: %s", tc.name, err)
+		}
+
+		_, err = cli.Parse(tc.args)
+		if err != nil {
+			t.Fatalf("%s: Parse: %s", tc.name, err)
+		}
+		if have, want := value, tc.want; have != want {
+			t.Fatalf("%s: parsed value: have: %v; want: %v", tc.name, have, want)
+		}
+	}
+
+	test(testCase{
+		name: "default value",
+		args: nil,
+		want: 3.5,
+	})
+	test(testCase{
+		name: "short",
+		args: []string{"-v", "5.1"},
+		want: 5.1,
+	})
+	test(testCase{
+		name: "long separated",
+		args: []string{"--value", "7.1"},
+		want: 7.1,
+	})
+	test(testCase{
+		name: "long with =",
+		args: []string{"--value=9.1"},
+		want: 9.1,
+	})
+
+}
+
+func TestParseFloatFailure(t *testing.T) {
+	type testCase struct {
+		name    string
+		input   []string
+		wantErr string
+	}
+
+	test := func(tc testCase) {
+		t.Helper()
+		var value float64
+		cli, err := clim.NewTop[any]("bang", "banana", nil)
+		if err != nil {
+			t.Fatalf("%s: NewTop: %s", tc.name, err)
+		}
+
+		err = cli.AddFlags(&clim.Flag{
+			Value: clim.Float64(&value, 3.5),
+			Short: "v", Long: "value",
+		})
+		if err != nil {
+			t.Fatalf("%s: AddFlags: %s", tc.name, err)
+		}
+
+		_, err = cli.Parse(tc.input)
+		if err == nil {
+			t.Fatalf("%s: Parse: <no error>; want: %s", tc.name, tc.wantErr)
+		}
+		if have, want := err.Error(), tc.wantErr; have != want {
+			t.Fatalf("%s: Parse: have: %v; want: %v", tc.name, have, want)
+		}
+	}
+
+	test(testCase{
+		name:    "not a float",
+		input:   []string{"-v", "x"},
+		wantErr: `setting "-v" "x": could not parse "x" as float (strconv.ParseFloat: parsing "x": invalid syntax)`,
+	})
+}
+
 func TestParseString(t *testing.T) {
 	type testCase struct {
 		name string

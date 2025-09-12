@@ -101,6 +101,32 @@ func (is *intSliceValue) String() string {
 }
 
 //
+// float64 Value
+//
+
+type float64Value float64
+
+// Float64 creates a [Value] that parses a float into dst.
+// See also [Flag] and [CLI.AddFlag].
+func Float64(dst *float64, defval float64) *float64Value {
+	*dst = defval
+	return (*float64Value)(dst)
+}
+
+// Set will be called by the parsing machinery.
+func (f *float64Value) Set(s string) error {
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return fmt.Errorf("could not parse %q as float (%s)", s, err)
+	}
+	*f = float64Value(v)
+	return nil
+}
+
+// String is called by help to print the default value.
+func (f *float64Value) String() string { return strconv.FormatFloat(float64(*f), 'g', -1, 64) }
+
+//
 // string Value
 //
 
