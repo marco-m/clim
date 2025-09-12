@@ -3,6 +3,7 @@ package clim
 import (
 	"errors"
 	"fmt"
+	"io"
 	"regexp"
 	"slices"
 	"strings"
@@ -377,6 +378,33 @@ func CountTrue(args ...bool) int {
 		}
 	}
 	return n
+}
+
+// ExitCode is an helper function to reduce the boilerplate in your program.
+// It calls mainErr(args), prints the help or the error and returns an appropriate
+// exit code:
+//   - 0 if no error, or help requested
+//   - 2 if command-line parse error
+//   - 1 if any other errors
+//
+// Usage:
+//
+//	func main() {
+//	    os.Exit(clim.ExitCode(mainErr, os.Args[1:], os.Stderr))
+//	}
+func ExitCode(mainErr func(args []string) error, args []string, out io.Writer) int {
+	err := mainErr(args)
+	if err == nil {
+		return 0
+	}
+	fmt.Fprintln(out, err)
+	if errors.Is(err, ErrHelp) {
+		return 0
+	}
+	if errors.Is(err, ErrParse) {
+		return 2
+	}
+	return 1
 }
 
 // regex to match an option on the command-line.

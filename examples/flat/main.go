@@ -9,6 +9,8 @@ import (
 )
 
 func main() {
+	// Alternative:
+	// os.Exit(clim.ExitCode(mainErr, os.Args[1:], os.Stderr))
 	os.Exit(MainInt())
 }
 
