@@ -1,6 +1,7 @@
 package clim_test
 
 import (
+	"log/slog"
 	"testing"
 	"time"
 
@@ -417,4 +418,103 @@ func TestParseDurationFailure(t *testing.T) {
 	rosina.AssertErrorIs(t, err, clim.ErrParse)
 	rosina.AssertErrorContains(t, err,
 		`setting "--timeout=78": time: missing unit in duration "78"`)
+}
+
+func TestParseLogLevelSuccess(t *testing.T) {
+	type testCase struct {
+		name string
+		args []string
+		want slog.Level
+	}
+
+	test := func(tc testCase) {
+		t.Helper()
+		var value slog.Level
+		cli, err := clim.NewTop[any]("bang", "banana", nil)
+		if err != nil {
+			t.Fatalf("%s: NewTop: %s", tc.name, err)
+		}
+
+		err = cli.AddFlags(&clim.Flag{
+			Value: clim.LogLevel(&value, slog.LevelInfo),
+			Short: "v", Long: "value",
+		})
+		if err != nil {
+			t.Fatalf("%s: AddFlags: %s", tc.name, err)
+		}
+
+		_, err = cli.Parse(tc.args)
+		if err != nil {
+			t.Fatalf("%s: Parse: %s", tc.name, err)
+		}
+		if have, want := value, tc.want; have != want {
+			t.Fatalf("%s: parsed value: have: %v; want: %v", tc.name, have, want)
+		}
+	}
+
+	test(testCase{
+		name: "default value",
+		args: nil,
+		want: slog.LevelInfo,
+	})
+	test(testCase{
+		name: "short-lowercase",
+		args: []string{"-v", "debug"},
+		want: slog.LevelDebug,
+	})
+	test(testCase{
+		name: "short-uppercase",
+		args: []string{"-v", "DEBUG"},
+		want: slog.LevelDebug,
+	})
+	test(testCase{
+		name: "long separated",
+		args: []string{"--value", "warn"},
+		want: slog.LevelWarn,
+	})
+	test(testCase{
+		name: "long with =",
+		args: []string{"--value=error"},
+		want: slog.LevelError,
+	})
+
+}
+
+func TestParseLogLevelFailure(t *testing.T) {
+	type testCase struct {
+		name    string
+		input   []string
+		wantErr string
+	}
+
+	test := func(tc testCase) {
+		t.Helper()
+		var value slog.Level
+		cli, err := clim.NewTop[any]("bang", "banana", nil)
+		if err != nil {
+			t.Fatalf("%s: NewTop: %s", tc.name, err)
+		}
+
+		err = cli.AddFlags(&clim.Flag{
+			Value: clim.LogLevel(&value, slog.LevelInfo),
+			Short: "v", Long: "value",
+		})
+		if err != nil {
+			t.Fatalf("%s: AddFlags: %s", tc.name, err)
+		}
+
+		_, err = cli.Parse(tc.input)
+		if err == nil {
+			t.Fatalf("%s: Parse: <no error>; want: %s", tc.name, tc.wantErr)
+		}
+		if have, want := err.Error(), tc.wantErr; have != want {
+			t.Fatalf("%s: Parse:\nhave: %v\nwant: %v", tc.name, have, want)
+		}
+	}
+
+	test(testCase{
+		name:    "not a log level",
+		input:   []string{"-v", "x"},
+		wantErr: `setting "-v" "x": could not parse "x" as slog.Level (slog: level string "x": unknown name)`,
+	})
 }

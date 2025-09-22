@@ -5,6 +5,7 @@ package clim
 
 import (
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
@@ -213,14 +214,41 @@ func Duration(dst *time.Duration, defval time.Duration) *durationValue {
 }
 
 // Set will be called by the parsing machinery.
-func (i *durationValue) Set(s string) error {
+func (ll *durationValue) Set(s string) error {
 	v, err := time.ParseDuration(s)
 	if err != nil {
 		return err
 	}
-	*i = durationValue(v)
+	*ll = durationValue(v)
 	return nil
 }
 
 // String is called by help to print the default value.
-func (i *durationValue) String() string { return time.Duration(*i).String() }
+func (ll *durationValue) String() string { return time.Duration(*ll).String() }
+
+//
+// slog.Level Value
+//
+
+type logLevelValue slog.Level
+
+// LogLevel creates a [Value] that parses a slog.Level into dst.
+// See also [Flag] and [CLI.AddFlag].
+func LogLevel(dst *slog.Level, defval slog.Level) *logLevelValue {
+	*dst = defval
+	return (*logLevelValue)(dst)
+}
+
+// Set will be called by the parsing machinery.
+func (ll *logLevelValue) Set(s string) error {
+	var logLevel slog.Level
+	err := logLevel.UnmarshalText([]byte(s))
+	if err != nil {
+		return fmt.Errorf("could not parse %q as slog.Level (%s)", s, err)
+	}
+	*ll = logLevelValue(logLevel)
+	return nil
+}
+
+// String is called by help to print the default value.
+func (ll *logLevelValue) String() string { return slog.Level(*ll).String() }
