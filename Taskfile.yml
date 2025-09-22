@@ -42,7 +42,7 @@ tasks:
 
   check-coverage:
     vars:
-      COVER: '96.2%'
+      COVER: '96.3%'
     cmds:
       - go clean -testcache
       - task: test
