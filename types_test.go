@@ -18,7 +18,7 @@ func TestParseIntSuccess(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var count int
-		cli, err := clim.NewTop[any]("bang", "bangs head against wall", nil)
+		cli, err := clim.NewTop("bang", "bangs head against wall")
 		rosina.AssertNoError(t, err)
 
 		err = cli.AddFlags(&clim.Flag{
@@ -69,7 +69,7 @@ func TestParseIntFailure(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var count int
-		cli, err := clim.NewTop[any]("bang", "bangs head against wall", nil)
+		cli, err := clim.NewTop("bang", "bangs head against wall")
 		rosina.AssertNoError(t, err)
 
 		err = cli.AddFlags(&clim.Flag{
@@ -103,7 +103,7 @@ func TestParseIntFailure(t *testing.T) {
 
 func TestParseIntSliceSuccess(t *testing.T) {
 	var pippos []int
-	cli, err := clim.NewTop[any]("bang", "bangs head against wall", nil)
+	cli, err := clim.NewTop("bang", "bangs head against wall")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(&clim.Flag{
@@ -119,7 +119,7 @@ func TestParseIntSliceSuccess(t *testing.T) {
 
 func TestParseIntSliceFailure(t *testing.T) {
 	var pippos []int
-	cli, err := clim.NewTop[any]("bang", "bangs head against wall", nil)
+	cli, err := clim.NewTop("bang", "bangs head against wall")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(&clim.Flag{
@@ -144,7 +144,7 @@ func TestParseFloatSuccess(t *testing.T) {
 	test := func(tc testCase) {
 		t.Helper()
 		var value float64
-		cli, err := clim.NewTop[any]("bang", "banana", nil)
+		cli, err := clim.NewTop("bang", "banana")
 		if err != nil {
 			t.Fatalf("%s: NewTop: %s", tc.name, err)
 		}
@@ -186,7 +186,6 @@ func TestParseFloatSuccess(t *testing.T) {
 		args: []string{"--value=9.1"},
 		want: 9.1,
 	})
-
 }
 
 func TestParseFloatFailure(t *testing.T) {
@@ -199,7 +198,7 @@ func TestParseFloatFailure(t *testing.T) {
 	test := func(tc testCase) {
 		t.Helper()
 		var value float64
-		cli, err := clim.NewTop[any]("bang", "banana", nil)
+		cli, err := clim.NewTop("bang", "banana")
 		if err != nil {
 			t.Fatalf("%s: NewTop: %s", tc.name, err)
 		}
@@ -237,7 +236,7 @@ func TestParseString(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var fruit string
-		cli, err := clim.NewTop[any]("bang", "bangs head against wall", nil)
+		cli, err := clim.NewTop("bang", "bangs head against wall")
 		rosina.AssertNoError(t, err)
 
 		err = cli.AddFlags(&clim.Flag{
@@ -281,7 +280,7 @@ func TestParseString(t *testing.T) {
 
 func TestParseStringSliceSuccess(t *testing.T) {
 	var mickeys []string
-	cli, err := clim.NewTop[any]("bang", "bangs head against wall", nil)
+	cli, err := clim.NewTop("bang", "bangs head against wall")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(&clim.Flag{
@@ -304,7 +303,7 @@ func TestParseBoolSuccess(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var sliced bool
-		cli, err := clim.NewTop[any]("bang", "bangs head against wall", nil)
+		cli, err := clim.NewTop("bang", "bangs head against wall")
 		rosina.AssertNoError(t, err)
 
 		err = cli.AddFlags(&clim.Flag{
@@ -360,7 +359,7 @@ func TestParseBoolFailure(t *testing.T) {
 
 	test := func(t *testing.T, tc testCase) {
 		var sliced bool
-		cli, err := clim.NewTop[any]("bang", "bangs head against wall", nil)
+		cli, err := clim.NewTop("bang", "bangs head against wall")
 		rosina.AssertNoError(t, err)
 
 		err = cli.AddFlags(&clim.Flag{
@@ -389,7 +388,7 @@ func TestParseBoolFailure(t *testing.T) {
 
 func TestParseDurationSuccess(t *testing.T) {
 	var timeout time.Duration
-	cli, err := clim.NewTop[any]("bang", "bangs head against wall", nil)
+	cli, err := clim.NewTop("bang", "bangs head against wall")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(&clim.Flag{
@@ -405,7 +404,7 @@ func TestParseDurationSuccess(t *testing.T) {
 
 func TestParseDurationFailure(t *testing.T) {
 	var timeout time.Duration
-	cli, err := clim.NewTop[any]("bang", "bangs head against wall", nil)
+	cli, err := clim.NewTop("bang", "bangs head against wall")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(&clim.Flag{
@@ -430,7 +429,7 @@ func TestParseLogLevelSuccess(t *testing.T) {
 	test := func(tc testCase) {
 		t.Helper()
 		var value slog.Level
-		cli, err := clim.NewTop[any]("bang", "banana", nil)
+		cli, err := clim.NewTop("bang", "banana")
 		if err != nil {
 			t.Fatalf("%s: NewTop: %s", tc.name, err)
 		}
@@ -477,7 +476,6 @@ func TestParseLogLevelSuccess(t *testing.T) {
 		args: []string{"--value=error"},
 		want: slog.LevelError,
 	})
-
 }
 
 func TestParseLogLevelFailure(t *testing.T) {
@@ -490,7 +488,7 @@ func TestParseLogLevelFailure(t *testing.T) {
 	test := func(tc testCase) {
 		t.Helper()
 		var value slog.Level
-		cli, err := clim.NewTop[any]("bang", "banana", nil)
+		cli, err := clim.NewTop("bang", "banana")
 		if err != nil {
 			t.Fatalf("%s: NewTop: %s", tc.name, err)
 		}

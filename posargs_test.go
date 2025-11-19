@@ -8,7 +8,7 @@ import (
 )
 
 func TestPosArgsRequiredSuccess(t *testing.T) {
-	cli, err := clim.NewTop[any]("bang", "bang head", nil)
+	cli, err := clim.NewTop("bang", "bang head")
 	rosina.AssertNoError(t, err)
 
 	var positionals []string
@@ -25,10 +25,10 @@ func TestPosArgsRequiredSuccess(t *testing.T) {
 }
 
 func TestCannotAddPosArgAfterSubCommand(t *testing.T) {
-	cli, err := clim.NewTop[any]("bang", "bang head", nil)
+	cli, err := clim.NewTop("bang", "bang head")
 	rosina.AssertNoError(t, err)
 
-	_, err = clim.NewSub[any](cli, "sub", "I am a subcommand A", nil)
+	_, err = clim.NewSub(cli, "sub", "I am a subcommand A")
 	rosina.AssertNoError(t, err)
 
 	var positionals []string
@@ -45,7 +45,7 @@ func TestAddPosArgFailure(t *testing.T) {
 	}
 
 	test := func(t *testing.T, tc testCase) {
-		cli, err := clim.NewTop[any]("bang", "bang head", nil)
+		cli, err := clim.NewTop("bang", "bang head")
 		rosina.AssertNoError(t, err)
 
 		var positionals []string

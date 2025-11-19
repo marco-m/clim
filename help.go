@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func (cli *CLI[T]) usage() error {
+func (cli *CLI) usage() error {
 	var bld strings.Builder
 
 	// Calculate the max width of the first column of commands.
@@ -80,7 +80,7 @@ func (cli *CLI[T]) usage() error {
 	return newHelpError("%s", bld.String())
 }
 
-func (cli *CLI[T]) printOptions(bld *strings.Builder) {
+func (cli *CLI) printOptions(bld *strings.Builder) {
 	// Do not sort the flags! The sorting breaks any semantic meaning that the
 	// manual ordering had.
 
@@ -126,7 +126,7 @@ func (cli *CLI[T]) printOptions(bld *strings.Builder) {
 		" -h, --help", "Print this help and exit\n")
 }
 
-func (cli *CLI[T]) printPosArgs(bld *strings.Builder) {
+func (cli *CLI) printPosArgs(bld *strings.Builder) {
 	if len(cli.pairs) == 0 {
 		return
 	}
@@ -146,7 +146,7 @@ func (cli *CLI[T]) printPosArgs(bld *strings.Builder) {
 	}
 }
 
-func printSomeSubCommands[T any](bld *strings.Builder, width int, subclis []*CLI[T]) {
+func printSomeSubCommands(bld *strings.Builder, width int, subclis []*CLI) {
 	for _, cmd := range subclis {
 		fmt.Fprintf(bld, " %-*s%s\n", width, cmd.name, cmd.oneline)
 	}

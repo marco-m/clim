@@ -9,7 +9,6 @@ import (
 
 func TestClone(t *testing.T) {
 	want := `hello from CloneCmd Run
-&main.cloneCmd{noUpdate:false, updateRev:""}
 `
 	readReset := rosina.InterceptOutput(t, &os.Stdout)
 
@@ -22,7 +21,6 @@ func TestClone(t *testing.T) {
 
 func TestInit(t *testing.T) {
 	want := `hello from InitCmd Run
-&main.initCmd{remoteCmd:"", mq:false}
 `
 	readReset := rosina.InterceptOutput(t, &os.Stdout)
 
@@ -35,7 +33,6 @@ func TestInit(t *testing.T) {
 
 func TestIncoming(t *testing.T) {
 	want := `hello from IncomingCmd Run
-&main.incomingCmd{force:false, newestFirst:false, bundle:"", rev:[]string(nil)}
 `
 	readReset := rosina.InterceptOutput(t, &os.Stdout)
 
@@ -48,7 +45,6 @@ func TestIncoming(t *testing.T) {
 
 func TestOutgoing(t *testing.T) {
 	want := `hello from OutgoingCmd Run
-&main.outgoingCmd{force:false, rev:[]string(nil), newestFirst:false, bookmarks:false}
 `
 	readReset := rosina.InterceptOutput(t, &os.Stdout)
 

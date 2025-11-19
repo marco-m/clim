@@ -25,17 +25,19 @@ options:
 type initCmd struct {
 	remoteCmd string
 	mq        bool
+	//
+	cli *clim.CLI
 }
 
-func newInitCLI(parent *clim.CLI[user]) (*clim.CLI[user], error) {
-	initCmd := initCmd{}
+func newInitCLI(parent *clim.CLI) (*initCmd, error) {
+	initCmd := &initCmd{}
 
 	cli, err := clim.NewSub(parent, "init",
-		"create a new repository in the given directory",
-		initCmd.Run)
+		"create a new repository in the given directory")
 	if err != nil {
 		return nil, err
 	}
+	initCmd.cli = cli
 
 	if err := cli.AddFlags(
 		&clim.Flag{
@@ -50,11 +52,10 @@ func newInitCLI(parent *clim.CLI[user]) (*clim.CLI[user], error) {
 		return nil, err
 	}
 
-	return cli, nil
+	return initCmd, nil
 }
 
-func (cmd *initCmd) Run(uctx user) error {
+func (cmd *initCmd) Run() error {
 	fmt.Println("hello from InitCmd Run")
-	fmt.Printf("%#+v\n", cmd)
 	return nil
 }

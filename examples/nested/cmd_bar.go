@@ -6,38 +6,49 @@ import (
 	"github.com/marco-m/clim"
 )
 
-func newBarCLI(parent *clim.CLI[App]) error {
-	cli, err := clim.NewSub[App](parent, "bar",
-		"simple bars all night; has subcommands", nil)
-	if err != nil {
-		return err
-	}
-
-	if err := newBarListCLI(cli); err != nil {
-		return err
-	}
-	if err := newBarMoveCLI(cli); err != nil {
-		return err
-	}
-
-	return nil
+type barCmds struct {
+	*barListCmd
+	*barMoveCmd
 }
-
-//
-//
-//
 
 type barListCmd struct {
 	foo string
 }
 
-func newBarListCLI(parent *clim.CLI[App]) error {
+type barMoveCmd struct {
+	id  int
+	dst string
+}
+
+func newBarCLI(parent *clim.CLI) (*barCmds, error) {
+	barCmds := barCmds{}
+	cli, err := clim.NewSub(parent, "bar", "simple bars all night; has subcommands")
+	if err != nil {
+		return nil, err
+	}
+
+	barCmds.barListCmd, err = newBarListCLI(cli)
+	if err != nil {
+		return nil, err
+	}
+	barCmds.barMoveCmd, err = newBarMoveCLI(cli)
+	if err != nil {
+		return nil, err
+	}
+
+	return &barCmds, nil
+}
+
+//
+//
+//
+
+func newBarListCLI(parent *clim.CLI) (*barListCmd, error) {
 	barListCmd := barListCmd{}
 
-	cli, err := clim.NewSub(parent, "list", "list all bars in a given foo",
-		barListCmd.Run)
+	cli, err := clim.NewSub(parent, "list", "list all bars in a given foo")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := cli.AddFlags(
@@ -46,10 +57,10 @@ func newBarListCLI(parent *clim.CLI[App]) error {
 			Long:  "foo", Help: "Name of the foo (see nested foo list)",
 			Required: true,
 		}); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &barListCmd, nil
 }
 
 func (cmd *barListCmd) Run(app App) error {
@@ -62,18 +73,12 @@ func (cmd *barListCmd) Run(app App) error {
 //
 //
 
-type barMoveCmd struct {
-	id  int
-	dst string
-}
-
-func newBarMoveCLI(parent *clim.CLI[App]) error {
+func newBarMoveCLI(parent *clim.CLI) (*barMoveCmd, error) {
 	barMoveCmd := barMoveCmd{}
 
-	cli, err := clim.NewSub(parent, "move",
-		"move a bar into a foo", barMoveCmd.Run)
+	cli, err := clim.NewSub(parent, "move", "move a bar into a foo")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := cli.AddFlags(
@@ -87,10 +92,10 @@ func newBarMoveCLI(parent *clim.CLI[App]) error {
 			Long:  "foo", Help: "Foo name",
 			Required: true,
 		}); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &barMoveCmd, nil
 }
 
 func (cmd *barMoveCmd) Run(app App) error {

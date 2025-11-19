@@ -35,7 +35,7 @@ func newHelpError(format string, a ...any) error {
 
 // CLI represents the top-level command, created with [New], and any
 // subcommands, created with [CLI.addCLI]. A [Flag] is added with [CLI.AddFlag].
-type CLI[T any] struct {
+type CLI struct {
 	name         string
 	oneline      string
 	description  string
@@ -49,47 +49,40 @@ type CLI[T any] struct {
 	longSeen     map[string]struct{} // Options seen on the command-line
 	positionals  []string
 	//
-	parent     *CLI[T]
+	parent     *CLI
 	rootToHere string
-	subCLIs    []*CLI[T]
-	action     func(uctx T) error
-	groups     []cliGroup[T]
+	subCLIs    []*CLI
+	groups     []cliGroup
 }
 
-type cliGroup[T any] struct {
+type cliGroup struct {
 	name string
-	clis []*CLI[T]
+	clis []*CLI
 }
 
 // NewTop creates the top-level [CLI], representing the program itself.
 // Parameter 'name' is the program name; parameter 'oneline' is the one-line
-// description. Parameter 'action', optional, will be returned by [Parse] if
-// the command-line invokes the program, instead of invoking a subcommand.
-// Type 'T' is the type of the  parameter of function 'action'.
+// description.
 // To add a subcommand, see [NewSub].
-func NewTop[T any](name string, oneline string, action func(uctx T) error,
-) (*CLI[T], error) {
+func NewTop(name string, oneline string) (*CLI, error) {
 	if name == "" {
 		return nil, NewParseError("cli name cannot be empty")
 	}
-	return newCli(nil, name, oneline, action), nil
+	return newCli(nil, name, oneline), nil
 }
 
 // NewSub creates a subcommand and adds it to the 'parent' node, which itself
 // could be the top command (created by [NewTop]) or an intermediate subcommand.
 // Parameter 'name' is the name of the subcommand; parameter 'oneline' is the
-// one-line description. Parameter 'action' will be returned by [Parse] if
-// the command-line invokes this subcommand.
-func NewSub[T any](parent *CLI[T], name string, oneline string,
-	action func(uctx T) error,
-) (*CLI[T], error) {
+// one-line description.
+func NewSub(parent *CLI, name string, oneline string) (*CLI, error) {
 	if name == "" {
 		return nil, NewParseError("cli name cannot be empty")
 	}
 	if parent == nil {
 		return nil, NewParseError("parent cli cannot be nil")
 	}
-	child := newCli(parent, name, oneline, action)
+	child := newCli(parent, name, oneline)
 	if parent.posargs != nil {
 		return nil,
 			NewParseError(
@@ -108,14 +101,11 @@ func NewSub[T any](parent *CLI[T], name string, oneline string,
 	return child, nil
 }
 
-func newCli[T any](parent *CLI[T], name string, oneline string,
-	action func(uctx T) error,
-) *CLI[T] {
-	child := &CLI[T]{
+func newCli(parent *CLI, name string, oneline string) *CLI {
+	child := &CLI{
 		parent:     parent,
 		name:       name,
 		oneline:    oneline,
-		action:     action,
 		long2flag:  make(map[string]*Flag),
 		short2long: make(map[string]string),
 		// name2posarg: make(map[string]*PosArg),
@@ -125,15 +115,19 @@ func newCli[T any](parent *CLI[T], name string, oneline string,
 	return child
 }
 
-func (cli *CLI[T]) SetDescription(desc string) {
+func (cli *CLI) Command() string {
+	return cli.rootToHere
+}
+
+func (cli *CLI) SetDescription(desc string) {
 	cli.description = strings.TrimSpace(desc)
 }
 
-func (cli *CLI[T]) SetExamples(examples string) {
+func (cli *CLI) SetExamples(examples string) {
 	cli.examples = strings.TrimSpace(examples)
 }
 
-func (cli *CLI[T]) SetFooter(footer string) {
+func (cli *CLI) SetFooter(footer string) {
 	cli.footer = strings.TrimSpace(footer)
 }
 
@@ -156,7 +150,7 @@ type Flag struct {
 // (e.g. [Int], [IntSlice], [Bool], ...) or a user-defined one.
 //
 // Taken from std/flag and adapted.
-func (cli *CLI[T]) AddFlags(flags ...*Flag) error {
+func (cli *CLI) AddFlags(flags ...*Flag) error {
 	for _, f := range flags {
 		if err := cli.addFlag(f); err != nil {
 			return err
@@ -165,7 +159,7 @@ func (cli *CLI[T]) AddFlags(flags ...*Flag) error {
 	return nil
 }
 
-func (cli *CLI[T]) addFlag(flag *Flag) error {
+func (cli *CLI) addFlag(flag *Flag) error {
 	//
 	// Validate the short flag.
 	//
@@ -240,7 +234,7 @@ func (cli *CLI[T]) addFlag(flag *Flag) error {
 }
 
 // AddGroup adds the subclis to the group name.
-func (cli *CLI[T]) AddGroup(name string, clis ...*CLI[T]) error {
+func (cli *CLI) AddGroup(name string, clis ...*CLI) error {
 	if len(clis) == 0 {
 		return NewParseError("AddGroup %s: child list is empty", name)
 	}
@@ -250,13 +244,13 @@ func (cli *CLI[T]) AddGroup(name string, clis ...*CLI[T]) error {
 				name, child.name)
 		}
 	}
-	cli.groups = append(cli.groups, cliGroup[T]{name, clis})
+	cli.groups = append(cli.groups, cliGroup{name, clis})
 	return nil
 }
 
-// Parse processes args, following subcommands (if any), and returns the
-// associated action.
-func (cli *CLI[T]) Parse(args []string) (func(uctx T) error, error) {
+// Parse processes args, following subcommands (if any).
+// It returns the subcommand path.
+func (cli *CLI) Parse(args []string) (command string, err error) {
 	index := 0
 
 	// Parse all the options. At the end of the loop, 'index' points to the
@@ -264,7 +258,7 @@ func (cli *CLI[T]) Parse(args []string) (func(uctx T) error, error) {
 	for {
 		long, offset, err := cli.parseOne(args[index:])
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 		cli.longSeen[long] = struct{}{}
 		if offset == 0 {
@@ -286,7 +280,7 @@ func (cli *CLI[T]) Parse(args []string) (func(uctx T) error, error) {
 	}
 	if len(missing) > 0 {
 		slices.Sort(missing)
-		return nil, NewParseError("missing required options: %s",
+		return "", NewParseError("missing required options: %s",
 			strings.Join(missing, ", "))
 	}
 
@@ -297,7 +291,7 @@ func (cli *CLI[T]) Parse(args []string) (func(uctx T) error, error) {
 	cli.positionals = args[index:]
 
 	if len(cli.subCLIs) > 0 && cli.posargs != nil {
-		return nil, fmt.Errorf(
+		return "", fmt.Errorf(
 			"clim: internal error: command %q has both subcommands and pos args",
 			cli.rootToHere)
 	}
@@ -307,7 +301,7 @@ func (cli *CLI[T]) Parse(args []string) (func(uctx T) error, error) {
 	//
 	if len(cli.subCLIs) > 0 {
 		if len(cli.positionals) == 0 {
-			return nil, NewParseError("expected a command")
+			return "", NewParseError("expected a command")
 		}
 		command := cli.positionals[0]
 		for _, p := range cli.subCLIs {
@@ -315,7 +309,7 @@ func (cli *CLI[T]) Parse(args []string) (func(uctx T) error, error) {
 				return p.Parse(cli.positionals[1:])
 			}
 		}
-		return nil, NewParseError("unrecognized command %q", command)
+		return "", NewParseError("unrecognized command %q", command)
 	}
 
 	//
@@ -325,7 +319,7 @@ func (cli *CLI[T]) Parse(args []string) (func(uctx T) error, error) {
 		*cli.posargs = cli.positionals
 	}
 
-	return cli.run, nil
+	return cli.rootToHere, nil
 }
 
 type Pair struct {
@@ -333,7 +327,7 @@ type Pair struct {
 	Help string
 }
 
-func (cli *CLI[T]) AddPosArgs(values *[]string, pairs ...Pair) error {
+func (cli *CLI) AddPosArgs(values *[]string, pairs ...Pair) error {
 	if len(cli.subCLIs) > 0 {
 		// FIXME this is NOT a parse error!!!
 		return NewParseError("%s: already have subcommands; cannot have also pos args",
@@ -419,7 +413,7 @@ var flagRE = regexp.MustCompile(`^(?P<hyphens>-*)(?P<name>.*?)((=)(?P<value>.+))
 //
 // it returns the tuple (long, number_of_items_consumed (0, 1 or 2), error).
 // long is used by the caller to enforce required options.
-func (cli *CLI[T]) parseOne(args []string) (string, int, error) {
+func (cli *CLI) parseOne(args []string) (string, int, error) {
 	if len(args) == 0 {
 		return "", 0, nil
 	}
@@ -488,7 +482,7 @@ func (cli *CLI[T]) parseOne(args []string) (string, int, error) {
 // pathRootToNode returns the CLI names in the tree path from the root to
 // 'node'.
 // TODO write test and add this to all errors?
-func pathRootToNode[T any](node *CLI[T]) []string {
+func pathRootToNode(node *CLI) []string {
 	var path []string
 	cursor := node
 	for {
@@ -500,11 +494,4 @@ func pathRootToNode[T any](node *CLI[T]) []string {
 	}
 	slices.Reverse(path)
 	return path
-}
-
-func (cli *CLI[T]) run(uctx T) error {
-	if cli.action == nil {
-		return NewParseError("%s: no action registered", cli.rootToHere)
-	}
-	return cli.action(uctx)
 }

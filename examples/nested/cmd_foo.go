@@ -11,29 +11,29 @@ type fooCmd struct {
 	positionals []string
 }
 
-func newFooCLI(parent *clim.CLI[App]) error {
+func newFooCLI(parent *clim.CLI) (*fooCmd, error) {
 	fooCmd := fooCmd{}
 
-	cli, err := clim.NewSub(parent, "foo", "simple foos all day", fooCmd.Run)
+	cli, err := clim.NewSub(parent, "foo", "simple foos all day")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := cli.AddFlags(&clim.Flag{
 		Value: clim.Bool(&fooCmd.soft, false),
 		Long:  "soft", Help: "make softer foos",
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := cli.AddPosArgs(&fooCmd.positionals,
 		clim.Pair{Name: "COUNT", Help: "How many foos (required)"},
 		clim.Pair{Name: "NAME", Help: "Name of the foos (required)"},
 		clim.Pair{Name: "COLOR...", Help: "One or more colors (required)"}); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &fooCmd, nil
 }
 
 func (cmd *fooCmd) Run(app App) error {

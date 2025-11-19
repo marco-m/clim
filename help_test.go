@@ -14,7 +14,7 @@ func TestSimpleHelp(t *testing.T) {
 		dryRun bool
 	}
 	var args Args
-	cli, err := clim.NewTop[any]("bang", "bangs head against wall", nil)
+	cli, err := clim.NewTop("bang", "bangs head against wall")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(
@@ -62,7 +62,7 @@ func TestHelpOfRequiredFlag(t *testing.T) {
 	var count int
 	var level int
 
-	cli, err := clim.NewTop[any]("bang", "bang head", nil)
+	cli, err := clim.NewTop("bang", "bang head")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(
@@ -117,7 +117,7 @@ Options:
  this is the footer
 `
 
-	cli, err := clim.NewTop[any]("bang", "bang head", nil)
+	cli, err := clim.NewTop("bang", "bang head")
 	rosina.AssertNoError(t, err)
 
 	cli.SetDescription("this is the description")
@@ -134,23 +134,23 @@ This is the last line of the example.`)
 }
 
 func TestSubCommandNilParent(t *testing.T) {
-	_, err := clim.NewSub[any](nil, "sub", "one-line", nil)
+	_, err := clim.NewSub(nil, "sub", "one-line")
 	rosina.AssertErrorContains(t, err, "parent cli cannot be nil")
 }
 
 func TestSubCommandEmptyName(t *testing.T) {
-	cli, err := clim.NewTop[any]("top", "top one-line", nil)
+	cli, err := clim.NewTop("top", "top one-line")
 	rosina.AssertNoError(t, err)
 
-	_, err = clim.NewSub(cli, "", "one-line", nil)
+	_, err = clim.NewSub(cli, "", "one-line")
 	rosina.AssertErrorContains(t, err, "cli name cannot be empty")
 }
 
 func TestHelpSubCommandsOneLevel(t *testing.T) {
-	cli, err := clim.NewTop[any]("bang", "bangs head against wall", nil)
+	cli, err := clim.NewTop("bang", "bangs head against wall")
 	rosina.AssertNoError(t, err)
 
-	_, err = clim.NewSub[any](cli, "sub", "I am a subcommand", nil)
+	_, err = clim.NewSub(cli, "sub", "I am a subcommand")
 	rosina.AssertNoError(t, err)
 
 	want := `bang -- bangs head against wall
@@ -172,13 +172,13 @@ Options:
 }
 
 func TestHelpSubCommandsTwoLevels(t *testing.T) {
-	cli, err := clim.NewTop[any]("bang", "bangs head against wall", nil)
+	cli, err := clim.NewTop("bang", "bangs head against wall")
 	rosina.AssertNoError(t, err)
 
-	sub1, err := clim.NewSub[any](cli, "sub1", "I am a subcommand at level 1", nil)
+	sub1, err := clim.NewSub(cli, "sub1", "I am a subcommand at level 1")
 	rosina.AssertNoError(t, err)
 
-	_, err = clim.NewSub[any](sub1, "sub2", "I am a subcommand at level 2", nil)
+	_, err = clim.NewSub(sub1, "sub2", "I am a subcommand at level 2")
 	rosina.AssertNoError(t, err)
 
 	want := `bang sub1 sub2 -- I am a subcommand at level 2
@@ -196,13 +196,13 @@ Options:
 }
 
 func TestHelpSubCommandsGroup(t *testing.T) {
-	cli, err := clim.NewTop[any]("bang", "bangs head against wall", nil)
+	cli, err := clim.NewTop("bang", "bangs head against wall")
 	rosina.AssertNoError(t, err)
 
-	subCliA, err := clim.NewSub[any](cli, "sub-A", "I am subcommand A", nil)
+	subCliA, err := clim.NewSub(cli, "sub-A", "I am subcommand A")
 	rosina.AssertNoError(t, err)
 
-	subCliB, err := clim.NewSub[any](cli, "sub-B", "I am subcommand B", nil)
+	subCliB, err := clim.NewSub(cli, "sub-B", "I am subcommand B")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddGroup("group 1", subCliA)
@@ -251,7 +251,7 @@ Positional arguments:
  COLOR...      One or more colors (required)
 `
 
-	cli, err := clim.NewTop[any]("bang", "bang head", nil)
+	cli, err := clim.NewTop("bang", "bang head")
 	rosina.AssertNoError(t, err)
 
 	var positionals []string
@@ -281,7 +281,7 @@ Positional arguments:
 //  COUNT      How many foos
 // `
 // 	var foos string
-// 	cli := clim.New[any]("bang", "bang head", nil)
+// 	cli := clim.New("bang", "bang head", nil)
 // 	err := cli.AddPosArgs(&clim.PosArg{
 // 		Value: clim.String(&foos, ""),
 // 		Name:  "NAME", Help: "Name of the foos", Required: true,

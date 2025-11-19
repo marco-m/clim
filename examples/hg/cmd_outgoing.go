@@ -35,17 +35,19 @@ type outgoingCmd struct {
 	rev         []string
 	newestFirst bool
 	bookmarks   bool
+	//
+	cli *clim.CLI
 }
 
-func newOutgoingCLI(parent *clim.CLI[user]) (*clim.CLI[user], error) {
+func newOutgoingCLI(parent *clim.CLI) (*outgoingCmd, error) {
 	outgoingCmd := outgoingCmd{}
 
 	cli, err := clim.NewSub(parent, "outgoing",
-		"show changesets not found in the destination",
-		outgoingCmd.Run)
+		"show changesets not found in the destination")
 	if err != nil {
 		return nil, err
 	}
+	outgoingCmd.cli = cli
 
 	if err := cli.AddFlags(
 		&clim.Flag{
@@ -69,11 +71,10 @@ func newOutgoingCLI(parent *clim.CLI[user]) (*clim.CLI[user], error) {
 		return nil, err
 	}
 
-	return cli, nil
+	return &outgoingCmd, nil
 }
 
-func (cmd *outgoingCmd) Run(uctx user) error {
+func (cmd *outgoingCmd) Run() error {
 	fmt.Println("hello from OutgoingCmd Run")
-	fmt.Printf("%#+v\n", cmd)
 	return nil
 }

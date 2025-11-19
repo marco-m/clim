@@ -11,10 +11,10 @@ import (
 )
 
 func main() {
-	os.Exit(mainInt(os.Args[1:]))
+	os.Exit(MainInt(os.Args[1:]))
 }
 
-func mainInt(args []string) int {
+func MainInt(args []string) int {
 	if err := mainErr(args); err != nil {
 		fmt.Println(err)
 		return clim.ExitCode(err)
@@ -22,45 +22,53 @@ func mainInt(args []string) int {
 	return 0
 }
 
-type user struct{}
-
 func mainErr(args []string) error {
-	cli, err := clim.NewTop[user]("hg", "Mercurial Distributed SCM", nil)
+	cli, err := clim.NewTop("hg", "Mercurial Distributed SCM")
 	if err != nil {
 		return err
 	}
 
-	clonecli, err := newCloneCLI(cli)
+	cloneCmd, err := newCloneCLI(cli)
 	if err != nil {
 		return err
 	}
-	initcli, err := newInitCLI(cli)
+	initCmd, err := newInitCLI(cli)
 	if err != nil {
 		return err
 	}
 	if err := cli.AddGroup("Repository creation",
-		clonecli, initcli); err != nil {
+		cloneCmd.cli, initCmd.cli); err != nil {
 		return err
 	}
 
-	incomingcli, err := newIncomingCLI(cli)
+	incomingCmd, err := newIncomingCLI(cli)
 	if err != nil {
 		return err
 	}
-	outgoingcli, err := newOutgoingCLI(cli)
+	outgoingCmd, err := newOutgoingCLI(cli)
 	if err != nil {
 		return err
 	}
 	if err := cli.AddGroup("Remote repository management",
-		incomingcli, outgoingcli); err != nil {
+		incomingCmd.cli, outgoingCmd.cli); err != nil {
 		return err
 	}
 
-	action, err := cli.Parse(args)
+	command, err := cli.Parse(args)
 	if err != nil {
 		return err
 	}
 
-	uctx := user{}
-	return action(uctx)
+	switch command {
+	case "hg clone":
+		return cloneCmd.Run()
+	case "hg init":
+		return initCmd.Run()
+	case "hg incoming":
+		return incomingCmd.Run()
+	case "hg outgoing":
+		return outgoingCmd.Run()
+	default:
+		return fmt.Errorf("internal error: unwired command: %s", command)
+	}
 }

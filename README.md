@@ -11,6 +11,8 @@ Command-line argument parsing for Go:
 * Support for subcommands.
 * Support for help.
 * Support for subcommand groups.
+* Support for examples.
+* Support for description and footer.
 
 ## How does it look like?
 

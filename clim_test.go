@@ -1,7 +1,6 @@
 package clim_test
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/marco-m/clim"
@@ -10,7 +9,7 @@ import (
 
 func TestVariableCanBeBoundOnlyOnce(t *testing.T) {
 	var count int
-	cli, err := clim.NewTop[any]("banana", "I am tasty", nil)
+	cli, err := clim.NewTop("banana", "I am tasty")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(
@@ -27,7 +26,7 @@ func TestVariableCanBeBoundOnlyOnce(t *testing.T) {
 func TestLongFlagsMustBeUnique(t *testing.T) {
 	var count int
 	var extra int
-	cli, err := clim.NewTop[any]("banana", "I am tasty", nil)
+	cli, err := clim.NewTop("banana", "I am tasty")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(
@@ -41,7 +40,7 @@ func TestLongFlagsMustBeUnique(t *testing.T) {
 func TestShortFlagsMustBeUnique(t *testing.T) {
 	var count int
 	var extra int
-	cli, err := clim.NewTop[any]("banana", "I am tasty", nil)
+	cli, err := clim.NewTop("banana", "I am tasty")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(
@@ -60,7 +59,7 @@ func TestShortFlagsMustBeUnique(t *testing.T) {
 
 func TestShortFlagMustBeOneChar(t *testing.T) {
 	var count int
-	cli, err := clim.NewTop[any]("banana", "I am tasty", nil)
+	cli, err := clim.NewTop("banana", "I am tasty")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(
@@ -73,7 +72,7 @@ func TestShortFlagMustBeOneChar(t *testing.T) {
 
 func TestLongFlagMustBeMoreThanOneChar(t *testing.T) {
 	var count int
-	cli, err := clim.NewTop[any]("banana", "I am tasty", nil)
+	cli, err := clim.NewTop("banana", "I am tasty")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(&clim.Flag{Value: clim.Int(&count, 0), Long: "c"})
@@ -84,7 +83,7 @@ func TestLongFlagMustBeMoreThanOneChar(t *testing.T) {
 
 func TestCannotOverrideLongHelpFlag(t *testing.T) {
 	var count int
-	cli, err := clim.NewTop[any]("banana", "I am tasty", nil)
+	cli, err := clim.NewTop("banana", "I am tasty")
 	rosina.AssertNoError(t, err)
 
 	// FIXME In the future I would like to allow to ovverride --help
@@ -97,7 +96,7 @@ func TestCannotOverrideLongHelpFlag(t *testing.T) {
 
 func TestCannotOverrideShortHelpFlag(t *testing.T) {
 	var extra int
-	cli, err := clim.NewTop[any]("banana", "I am tasty", nil)
+	cli, err := clim.NewTop("banana", "I am tasty")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(&clim.Flag{
@@ -112,7 +111,7 @@ func TestCannotOverrideShortHelpFlag(t *testing.T) {
 func TestLongFlagIsMandatory(t *testing.T) {
 	var count int
 	var extra int
-	cli, err := clim.NewTop[any]("banana", "I am tasty", nil)
+	cli, err := clim.NewTop("banana", "I am tasty")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(
@@ -131,7 +130,7 @@ func TestFlagsNamingConstraints(t *testing.T) {
 	}
 
 	test := func(t *testing.T, tc testCase) {
-		cli, err := clim.NewTop[any]("banana", "I am tasty", nil)
+		cli, err := clim.NewTop("banana", "I am tasty")
 		rosina.AssertNoError(t, err)
 
 		var count int
@@ -173,54 +172,28 @@ func TestFlagsNamingConstraints(t *testing.T) {
 }
 
 func TestCliNameCannotBeEmpty(t *testing.T) {
-	_, err := clim.NewTop[any]("", "I am tasty", nil)
+	_, err := clim.NewTop("", "I am tasty")
 	rosina.AssertErrorContains(t, err, `cli name cannot be empty`)
-}
-
-func TestActionMissing(t *testing.T) {
-	cli, err := clim.NewTop[string]("basket", "juicy fruits", nil)
-	rosina.AssertNoError(t, err)
-
-	action, err := cli.Parse(nil)
-
-	rosina.AssertNoError(t, err)
-	err = action("hello")
-	rosina.AssertErrorIs(t, err, clim.ErrParse)
-	rosina.AssertErrorContains(t, err, "basket: no action registered")
-}
-
-func TestActionPresent(t *testing.T) {
-	cli, err := clim.NewTop[string]("basket", "juicy fruits",
-		func(uctx string) error { return errors.New(uctx) })
-	rosina.AssertNoError(t, err)
-
-	// In this simple case, it might be unclear why the indirection
-	// of passing through action. It becomes evident when using subcommands.
-	action, err := cli.Parse(nil)
-	rosina.AssertNoError(t, err)
-
-	err = action("mango")
-	rosina.AssertErrorContains(t, err, "mango")
 }
 
 func TestParseOneFlagPairSuccess(t *testing.T) {
 	var count int
-	cli, err := clim.NewTop[any]("basket", "juicy fruits", nil)
-	rosina.AssertNoError(t, err)
+	cli, err := clim.NewTop("basket", "juicy fruits")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(&clim.Flag{Value: clim.Int(&count, 3), Long: "count"})
 	rosina.AssertNoError(t, err)
 
-	_, err = cli.Parse([]string{"--count", "42"})
+	command, err := cli.Parse([]string{"--count", "42"})
 
 	rosina.AssertNoError(t, err)
+	rosina.AssertEqual(t, command, "basket", "command")
 	rosina.AssertEqual(t, count, 42, "count")
 }
 
 func TestParseOneFlagPairUnrecognized(t *testing.T) {
 	var count int
-	cli, err := clim.NewTop[any]("basket", "juicy fruits", nil)
+	cli, err := clim.NewTop("basket", "juicy fruits")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(&clim.Flag{Value: clim.Int(&count, 3), Long: "count"})
@@ -242,7 +215,7 @@ func TestParseOneFlagPairUnrecognized(t *testing.T) {
 func TestRequiredIgnoresDefaultSuccess(t *testing.T) {
 	var count int
 	var level int
-	cli, err := clim.NewTop[any]("bang", "bang head", nil)
+	cli, err := clim.NewTop("bang", "bang head")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(
@@ -259,9 +232,10 @@ func TestRequiredIgnoresDefaultSuccess(t *testing.T) {
 		})
 	rosina.AssertNoError(t, err)
 
-	_, err = cli.Parse([]string{"--count=1"})
+	command, err := cli.Parse([]string{"--count=1"})
 
 	rosina.AssertNoError(t, err)
+	rosina.AssertEqual(t, command, "bang", "command")
 	rosina.AssertEqual(t, count, 1, "count (parsed)")
 	rosina.AssertEqual(t, level, 5, "level (default value)")
 }
@@ -270,7 +244,7 @@ func TestRequiredFailure(t *testing.T) {
 	var count int
 	var level int
 	var foo int
-	cli, err := clim.NewTop[any]("bang", "bang head", nil)
+	cli, err := clim.NewTop("bang", "bang head")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(
@@ -301,7 +275,7 @@ func TestSubCommandWithRequiredOptionFailure(t *testing.T) {
 	var count int
 	var foo int
 
-	cli, err := clim.NewTop[any]("bang", "bang head", nil)
+	cli, err := clim.NewTop("bang", "bang head")
 	rosina.AssertNoError(t, err)
 
 	err = cli.AddFlags(&clim.Flag{
@@ -311,7 +285,7 @@ func TestSubCommandWithRequiredOptionFailure(t *testing.T) {
 	})
 	rosina.AssertNoError(t, err)
 
-	subCli, err := clim.NewSub[any](cli, "sub", "I am a subcommand", nil)
+	subCli, err := clim.NewSub(cli, "sub", "I am a subcommand")
 	rosina.AssertNoError(t, err)
 
 	err = subCli.AddFlags(&clim.Flag{
@@ -328,10 +302,10 @@ func TestSubCommandWithRequiredOptionFailure(t *testing.T) {
 }
 
 func TestMissingSubcommandFailure(t *testing.T) {
-	cli, err := clim.NewTop[any]("bang", "bang head", nil)
+	cli, err := clim.NewTop("bang", "bang head")
 	rosina.AssertNoError(t, err)
 
-	_, err = clim.NewSub[any](cli, "sub", "I am a subcommand", nil)
+	_, err = clim.NewSub(cli, "sub", "I am a subcommand")
 	rosina.AssertNoError(t, err)
 
 	_, err = cli.Parse([]string{})
@@ -341,10 +315,10 @@ func TestMissingSubcommandFailure(t *testing.T) {
 }
 
 func TestWrongSubcommandFailure(t *testing.T) {
-	cli, err := clim.NewTop[any]("bang", "bang head", nil)
+	cli, err := clim.NewTop("bang", "bang head")
 	rosina.AssertNoError(t, err)
 
-	_, err = clim.NewSub[any](cli, "sub", "I am a subcommand", nil)
+	_, err = clim.NewSub(cli, "sub", "I am a subcommand")
 	rosina.AssertNoError(t, err)
 
 	_, err = cli.Parse([]string{"hello"})
@@ -354,34 +328,34 @@ func TestWrongSubcommandFailure(t *testing.T) {
 }
 
 func TestSubCommandNamesMustBeUnique(t *testing.T) {
-	cli, err := clim.NewTop[any]("bang", "bang head", nil)
+	cli, err := clim.NewTop("bang", "bang head")
 	rosina.AssertNoError(t, err)
 
-	_, err = clim.NewSub[any](cli, "sub", "I am a subcommand A", nil)
+	_, err = clim.NewSub(cli, "sub", "I am a subcommand A")
 	rosina.AssertNoError(t, err)
 
-	_, err = clim.NewSub[any](cli, "sub", "I am a subcommand B", nil)
+	_, err = clim.NewSub(cli, "sub", "I am a subcommand B")
 	rosina.AssertErrorContains(t, err, `bang: subcommand "sub" already defined`)
 }
 
 func TestCannotAddSubCommandAfterPosArgs(t *testing.T) {
-	cli, err := clim.NewTop[any]("bang", "bang head", nil)
+	cli, err := clim.NewTop("bang", "bang head")
 	rosina.AssertNoError(t, err)
 
 	var positionals []string
 	err = cli.AddPosArgs(&positionals, clim.Pair{"NAME", "Name of the foos"})
 	rosina.AssertNoError(t, err)
 
-	_, err = clim.NewSub[any](cli, "sub", "I am a subcommand A", nil)
+	_, err = clim.NewSub(cli, "sub", "I am a subcommand A")
 	rosina.AssertErrorContains(t, err,
 		`bang: already have pos args; cannot have also subcommand "sub"`)
 }
 
 func TestAddGroupSuccess(t *testing.T) {
-	root, err := clim.NewTop[any]("bang", "bang head", nil)
+	root, err := clim.NewTop("bang", "bang head")
 	rosina.AssertNoError(t, err)
 
-	child, err := clim.NewSub[any](root, "child", "I am a child", nil)
+	child, err := clim.NewSub(root, "child", "I am a child")
 	rosina.AssertNoError(t, err)
 
 	err = root.AddGroup("ciccio", child)
@@ -389,7 +363,7 @@ func TestAddGroupSuccess(t *testing.T) {
 }
 
 func TestAddGroupMissingChildren(t *testing.T) {
-	root, err := clim.NewTop[any]("bang", "bang head", nil)
+	root, err := clim.NewTop("bang", "bang head")
 	rosina.AssertNoError(t, err)
 
 	err = root.AddGroup("ciccio")
@@ -398,10 +372,10 @@ func TestAddGroupMissingChildren(t *testing.T) {
 
 func TestAddGroupMissingAddCLI(t *testing.T) {
 	// AddGroup ciccio: child child is missing previous AddCLI
-	child, err := clim.NewTop[any]("child", "I am a child", nil)
+	child, err := clim.NewTop("child", "I am a child")
 	rosina.AssertNoError(t, err)
 
-	root, err := clim.NewTop[any]("bang", "bang head", nil)
+	root, err := clim.NewTop("bang", "bang head")
 	rosina.AssertNoError(t, err)
 
 	err = root.AddGroup("ciccio", child)

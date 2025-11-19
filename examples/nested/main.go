@@ -8,10 +8,10 @@ import (
 )
 
 func main() {
-	os.Exit(mainInt(os.Args[1:]))
+	os.Exit(MainInt(os.Args[1:]))
 }
 
-func mainInt(args []string) int {
+func MainInt(args []string) int {
 	if err := mainErr(args); err != nil {
 		fmt.Println(err)
 		return clim.ExitCode(err)
@@ -25,30 +25,40 @@ type App struct {
 
 func mainErr(args []string) error {
 	app := App{}
-	cli, err := clim.NewTop[App]("nested", "two subcommands and one nested", nil)
+	cli, err := clim.NewTop("nested", "two subcommands and one nested")
 	if err != nil {
 		return err
 	}
 
 	if err := cli.AddFlags(
 		&clim.Flag{
-			Value: clim.Bool(&app.verbose, false),
-			Long:  "verbose", Help: "Be more verbose",
+			Value: clim.Bool(&app.verbose, false), Long: "verbose",
+			Help: "Be more verbose",
 		}); err != nil {
 		return err
 	}
 
-	if err := newFooCLI(cli); err != nil {
+	fooCmd, err := newFooCLI(cli)
+	if err != nil {
 		return err
 	}
-	if err := newBarCLI(cli); err != nil {
-		return err
-	}
-
-	action, err := cli.Parse(args)
+	barCmd, err := newBarCLI(cli)
 	if err != nil {
 		return err
 	}
 
-	return action(app)
+	command, err := cli.Parse(args)
+	if err != nil {
+		return err
+	}
+	switch command {
+	case "nested foo":
+		return fooCmd.Run(app)
+	case "nested bar list":
+		return barCmd.barListCmd.Run(app)
+	case "nested bar move":
+		return barCmd.barMoveCmd.Run(app)
+	default:
+		return fmt.Errorf("internal error: unwired command: %s", command)
+	}
 }

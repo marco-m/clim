@@ -30,7 +30,7 @@ type Application struct {
 
 func mainErr(args []string) error {
 	var app Application
-	cli, err := clim.NewTop("flat", "flattens head against wall", app.run)
+	cli, err := clim.NewTop("flat", "flattens head against wall")
 	if err != nil {
 		return err
 	}
@@ -81,23 +81,22 @@ Could be multi-line.`)
 		return err
 	}
 
-	action, err := cli.Parse(args)
-	if err != nil {
+	if _, err := cli.Parse(args); err != nil {
 		return err
 	}
 
-	return action(0)
+	return app.run()
 }
 
-func (args *Application) run(uctx int) error {
+func (app *Application) run() error {
 	// Validation
-	if clim.CountTrue(args.doors != nil, args.windows != nil,
-		args.floors != nil) > 1 {
+	if clim.CountTrue(app.doors != nil, app.windows != nil,
+		app.floors != nil) > 1 {
 		return clim.NewParseError("only one of doors, windows, floors can be specified")
 	}
 
-	for i := range args.count {
-		fmt.Println(i+1, "flatten against", args.wall)
+	for i := range app.count {
+		fmt.Println(i+1, "flatten against", app.wall)
 	}
 	return nil
 }

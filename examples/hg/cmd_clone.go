@@ -9,17 +9,19 @@ import (
 type cloneCmd struct {
 	noUpdate  bool
 	updateRev string
+	//
+	cli *clim.CLI
 }
 
-func newCloneCLI(parent *clim.CLI[user]) (*clim.CLI[user], error) {
-	cloneCmd := cloneCmd{}
+func newCloneCLI(parent *clim.CLI) (*cloneCmd, error) {
+	cloneCmd := &cloneCmd{}
 
 	cli, err := clim.NewSub(parent, "clone",
-		"make a copy of an existing repository",
-		cloneCmd.Run)
+		"make a copy of an existing repository")
 	if err != nil {
 		return nil, err
 	}
+	cloneCmd.cli = cli
 
 	if err := cli.AddFlags(
 		&clim.Flag{
@@ -35,11 +37,10 @@ func newCloneCLI(parent *clim.CLI[user]) (*clim.CLI[user], error) {
 		return nil, err
 	}
 
-	return cli, nil
+	return cloneCmd, nil
 }
 
-func (cmd *cloneCmd) Run(uctx user) error {
+func (cmd *cloneCmd) Run() error {
 	fmt.Println("hello from CloneCmd Run")
-	fmt.Printf("%#+v\n", cmd)
 	return nil
 }

@@ -35,17 +35,19 @@ type incomingCmd struct {
 	newestFirst bool
 	bundle      string
 	rev         []string
+	//
+	cli *clim.CLI
 }
 
-func newIncomingCLI(parent *clim.CLI[user]) (*clim.CLI[user], error) {
-	incomingCmd := incomingCmd{}
+func newIncomingCLI(parent *clim.CLI) (*incomingCmd, error) {
+	incomingCmd := &incomingCmd{}
 
 	cli, err := clim.NewSub(parent, "incoming",
-		"show new changesets found in source",
-		incomingCmd.Run)
+		"show new changesets found in source")
 	if err != nil {
 		return nil, err
 	}
+	incomingCmd.cli = cli
 
 	if err := cli.AddFlags(
 		&clim.Flag{
@@ -71,11 +73,10 @@ func newIncomingCLI(parent *clim.CLI[user]) (*clim.CLI[user], error) {
 		return nil, err
 	}
 
-	return cli, nil
+	return incomingCmd, nil
 }
 
-func (cmd *incomingCmd) Run(uctx user) error {
+func (cmd *incomingCmd) Run() error {
 	fmt.Println("hello from IncomingCmd Run")
-	fmt.Printf("%#+v\n", cmd)
 	return nil
 }
