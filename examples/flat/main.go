@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
@@ -9,24 +8,15 @@ import (
 )
 
 func main() {
-	// Alternative:
-	// os.Exit(clim.ExitCode(mainErr, os.Args[1:], os.Stderr))
-	os.Exit(MainInt())
+	os.Exit(MainInt(os.Args[1:]))
 }
 
-func MainInt() int {
-	err := mainErr(os.Args[1:])
-	if err == nil {
-		return 0
+func MainInt(args []string) int {
+	if err := mainErr(args); err != nil {
+		fmt.Println(err)
+		return clim.ExitCode(err)
 	}
-	fmt.Println(err)
-	if errors.Is(err, clim.ErrHelp) {
-		return 0
-	}
-	if errors.Is(err, clim.ErrParse) {
-		return 2
-	}
-	return 1
+	return 0
 }
 
 type Application struct {

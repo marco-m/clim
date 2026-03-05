@@ -21,7 +21,7 @@ import (
 
 func TestMain(m *testing.M) {
 	os.Exit(testscript.RunMain(m, map[string]func() int{
-		"flat": flat.MainInt,
+		"flat": func() int { return flat.MainInt(os.Args[1:]) },
 	}))
 }
 
